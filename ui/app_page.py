@@ -57,7 +57,7 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
         key = f"section_{fw}"
         if goto and goto[0] == fw:
             st.session_state[key] = goto[1]
-        if key not in st.session_state or (findings is None and st.session_state[key] != "Run"):
+        if key not in st.session_state:
             st.session_state[key] = "Dashboard" if findings else "Run"
         section = st.radio("Section", SECTIONS, horizontal=True, key=key, label_visibility="collapsed")
 
