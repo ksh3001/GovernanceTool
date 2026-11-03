@@ -88,23 +88,28 @@ def _windows(f: IngestedFile, control: Control, max_tokens: int) -> list[Segment
     hit_lines = [i for i, ln in enumerate(lines) if any(p.search(ln.lower()) for p in pats)]
     if not hit_lines:
         hit_lines = [0]
-    # Grow windows around hits, merge overlaps, then keep windows (by hit density) while they fit.
-    spans: list[list[int]] = []
-    for i in hit_lines:
-        lo, hi = max(0, i - CONTEXT_LINES), min(len(lines) - 1, i + CONTEXT_LINES)
-        if spans and lo <= spans[-1][1] + 1:
-            spans[-1][1] = max(spans[-1][1], hi)
-            spans[-1][2] += 1
-        else:
-            spans.append([lo, hi, 1])
-    chosen, used = [], 0
-    for lo, hi, hits in sorted(spans, key=lambda s: -s[2] / (s[1] - s[0] + 1)):
-        text = "\n".join(lines[lo:hi + 1])
-        cost = estimate_tokens(text)
-        if used + cost <= max_tokens:
-            chosen.append(Segment(start=lo + 1, end=hi + 1, text=text))
-            used += cost
-    if not chosen:  # even the best window is too big: cut it to fit
+    # Grow windows around hits and merge overlaps. If nothing fits, tighten the context and retry,
+    # so a small budget keeps the lines that matched and not just the top of the file.
+    chosen: list[Segment] = []
+    for context in (CONTEXT_LINES, 10, 5, 2, 0):
+        spans: list[list[int]] = []
+        for i in hit_lines:
+            lo, hi = max(0, i - context), min(len(lines) - 1, i + context)
+            if spans and lo <= spans[-1][1] + 1:
+                spans[-1][1] = max(spans[-1][1], hi)
+                spans[-1][2] += 1
+            else:
+                spans.append([lo, hi, 1])
+        used = 0
+        for lo, hi, hits in sorted(spans, key=lambda s: -s[2] / (s[1] - s[0] + 1)):
+            text = "\n".join(lines[lo:hi + 1])
+            cost = estimate_tokens(text)
+            if used + cost <= max_tokens:
+                chosen.append(Segment(start=lo + 1, end=hi + 1, text=text))
+                used += cost
+        if chosen:
+            break
+    if not chosen:  # even a single matching line is too big: cut it to fit
         lo, hi, _ = max(spans, key=lambda s: s[2])
         end, size = lo, 0
         while end <= hi and size + estimate_tokens(lines[end]) <= max_tokens:

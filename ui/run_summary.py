@@ -3,13 +3,17 @@ from __future__ import annotations
 
 import streamlit as st
 
+from core.assess import run_assessment
 from core.config import Settings
 from core.controls import load_controls
+from core.findings import FindingsFile, findings_path
 from core.ingest import ingest
+from core.llm import LLMClient
 from core.onboarding import load_questionnaire
 from core.runplan import build_run_plan
 from core.store import Store
 from core.tiers import control_applicability, load_classifier
+from ui import findings as findings_view
 
 
 def render(store: Store, settings: Settings, app_id: str) -> None:
@@ -80,5 +84,22 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
             for s in plan.files_skipped:
                 st.markdown(f"`{s.area}/{s.path}` — {s.reason}")
 
-        st.button("Start assessment", type="primary", disabled=True, key=f"start_{fw}",
-                  help="The assessment loop is built in the next step.")
+        existing = store.load(app_id, findings_path(fw), FindingsFile)
+        label = "Run assessment again" if existing else "Start assessment"
+        if st.button(label, type="primary", key=f"start_{fw}"):
+            bar = st.progress(0.0, text="Starting…")
+            try:
+                result = run_assessment(
+                    app_id=app_id, framework=fw, controls=controls, applicability=applic, q=q, tier=tier,
+                    ingested=ingested, llm=LLMClient(settings), repo_commit=app.repo_commit,
+                    progress=lambda done, total, text: bar.progress(done / max(total, 1), text=text),
+                    log=lambda entry: store.append_log(app_id, f"logs/run_{fw}.jsonl", entry))
+            except RuntimeError as exc:  # configuration or replay problem: nothing is saved
+                bar.empty()
+                st.error(str(exc))
+            else:
+                store.save(app_id, findings_path(fw), result)
+                st.rerun()
+        if existing:
+            st.subheader("Findings")
+            findings_view.render(existing)
