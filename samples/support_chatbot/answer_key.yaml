@@ -1,0 +1,33 @@
+# Expected results for sample app B. DRAFT written by the build team.
+# A compliance expert must confirm this key before any agreement score is quoted.
+# This file lives outside repo/ and docs/ so it is never shown to the assessor.
+app_name: Support Chatbot
+framework: eu_ai_act
+expected_tier: limited
+tier_rule: "Article 50(1): AI systems that interact directly with natural persons must tell them they are interacting with an AI system"
+status: draft_unreviewed
+reviewed_by: null
+
+controls:
+  eu-art-9:  {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-10: {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-11: {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-12: {status: not_applicable, note: "High-risk requirement; this system is limited risk, so missing audit logging is not a finding.", evidence: []}
+  eu-art-13: {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-14: {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-15: {status: not_applicable, note: High-risk requirement; this system is limited risk., evidence: []}
+  eu-art-50-1:
+    status: met
+    note: The first message of every conversation says the user is talking to an AI, and the transparency note documents it.
+    evidence:
+      - {area: repo, file: disclosure.py, lines: [3, 6], contains: "I'm an AI assistant, not a human", role: supports}
+      - {area: repo, file: bot.py, lines: [28, 32], contains: "return DISCLOSURE_MESSAGE", role: supports}
+      - {area: docs, file: transparency_note.md, lines: [4, 5], contains: "assistant is an AI", role: supports}
+  eu-art-50-2:
+    status: not_applicable
+    note: >
+      The questionnaire says no synthetic content is generated. Text chat answers could arguably count as
+      synthetic text, so the expert should confirm this reading.
+    evidence: []
+
+trap_cases: []

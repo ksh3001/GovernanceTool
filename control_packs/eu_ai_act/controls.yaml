@@ -108,6 +108,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high, limited]
+    applies_if: interacts_with_people
     search_terms: [disclosure, disclose, ai assistant, chatbot, you are talking to, virtual assistant, notice, interacting with, bot, banner]
 
   - id: eu-art-50-2

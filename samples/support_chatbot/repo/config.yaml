@@ -1,0 +1,4 @@
+model:
+  name: gpt-4o-mini
+  temperature: 0.2
+handoff_keywords: ["agent", "human", "person"]

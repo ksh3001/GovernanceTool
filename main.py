@@ -5,9 +5,10 @@ import hmac
 
 import streamlit as st
 
-from core.config import load_settings
+from core.config import ROOT, load_settings
 from core.onboarding import load_questionnaire
 from core.packs import discover_packs
+from core.samples import install_samples
 from core.store import Store
 from ui import onboarding
 
@@ -97,6 +98,10 @@ def home() -> None:
         st.success(flash)
     if st.button("Onboard an application", type="primary"):
         st.session_state.page = "onboard"
+        st.rerun()
+    if st.button("Load sample apps", help="Adds the HR CV Screener and Support Chatbot demo applications."):
+        added = install_samples(store, ROOT / "samples", st.session_state.frameworks, st.session_state.user)
+        st.session_state.flash = f"Loaded {len(added)} sample app(s)." if added else "Sample apps are already loaded."
         st.rerun()
     apps = store.list_apps()
     if not apps:

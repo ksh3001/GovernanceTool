@@ -1,0 +1,13 @@
+{
+  "purpose": "Answers customers' routine questions about orders, delivery and returns in a website chat window.",
+  "role": "deployer",
+  "eu_market": true,
+  "annex_iii_area": "none",
+  "safety_component_annex_i": false,
+  "affects_individuals": false,
+  "autonomy": "advisory_only",
+  "narrow_procedural_task": false,
+  "interacts_with_people": true,
+  "generates_synthetic_content": false,
+  "prohibited_practices": []
+}

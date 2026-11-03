@@ -16,6 +16,7 @@ class AppRecord(BaseModel):
     repo_path: str = ""
     docs_path: str = ""
     frameworks: list[str] = Field(default_factory=list)
+    answer_key_path: str = ""  # set only for bundled sample apps
     created_by: str = ""
     created_at: str = Field(default_factory=_now)
 

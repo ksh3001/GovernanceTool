@@ -1,0 +1,61 @@
+# Expected results for sample app A. DRAFT written by the build team.
+# A compliance expert must confirm this key before any agreement score is quoted.
+# This file lives outside repo/ and docs/ so it is never shown to the assessor.
+app_name: HR CV Screener
+framework: eu_ai_act
+expected_tier: high
+tier_rule: "Annex III 4(a): AI systems used for recruitment or selection of persons, in particular to filter applications and evaluate candidates"
+status: draft_unreviewed
+reviewed_by: null
+
+# area: repo = source code folder, docs = documents folder. Lines are 1-based and inclusive.
+controls:
+  eu-art-9:
+    status: insufficient_evidence
+    note: No risk assessment, risk register or risk management process appears in any file.
+    evidence: []
+  eu-art-10:
+    status: partial
+    note: Data sources and handling are described, but there are no bias, representativeness or data-quality checks.
+    evidence:
+      - {area: docs, file: data_notes.md, lines: [16, 17], contains: "passed to the model unchanged", role: supports}
+  eu-art-11:
+    status: partial
+    note: The model card covers purpose, model and limitations but has no accuracy figures or evaluation results.
+    evidence:
+      - {area: docs, file: model_card.md, lines: [3, 6], contains: "scores each CV", role: supports}
+  eu-art-12:
+    status: met
+    note: Every decision is logged with a timestamp, score, decision, model version and a retention period.
+    evidence:
+      - {area: repo, file: audit.py, lines: [10, 20], contains: "def log_decision", role: supports}
+  eu-art-13:
+    status: partial
+    note: Output is a score and a one-line summary. Nothing explains how to interpret scores or their limits to recruiters.
+    evidence:
+      - {area: docs, file: model_card.md, lines: [12, 14], contains: "Output: a score", role: supports}
+  eu-art-14:
+    status: not_met
+    note: >
+      Candidates are rejected and emailed immediately, with no review step.
+      TRAP: oversight_policy.md says a human reviews every rejection, but the code does not support that claim.
+    evidence:
+      - {area: repo, file: screen.py, lines: [45, 52], contains: 'send_email(candidate_id, "rejection")', role: supports}
+      - {area: docs, file: oversight_policy.md, lines: [8, 8], contains: "reviews every rejection", role: contradicted_claim}
+  eu-art-15:
+    status: partial
+    note: Model replies are validated, clamped and retried, but no accuracy target, testing or security measures are documented.
+    evidence:
+      - {area: repo, file: screen.py, lines: [28, 38], contains: "json.loads", role: supports}
+  eu-art-50-1:
+    status: not_applicable
+    note: People do not interact directly with the system.
+    evidence: []
+  eu-art-50-2:
+    status: not_applicable
+    note: The system generates no synthetic content.
+    evidence: []
+
+trap_cases:
+  - control: eu-art-14
+    description: The oversight policy claims human review of every rejection, but screen.py rejects and emails automatically. The finding must say the document claim is not backed by the code.
