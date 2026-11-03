@@ -44,7 +44,11 @@ Configuration comes from environment variables (or a git-ignored `.env`): `AZURE
 
 ## Onboarding an app
 
-The onboarding screen takes an application name, a path to a local repo folder, an optional path to a documents folder, and the questionnaire. Everything is read from disk. Nothing from the app is executed, and nothing is cloned from the network.
+The onboarding screen takes an application name, **either a public repository URL or a path to a local repo folder**, an optional path to a documents folder, and the questionnaire. Nothing from the app is executed.
+
+**Repository URL (`fetch.py`).** Public repos only, on an allowed host (`github.com`, `gitlab.com`, `bitbucket.org`, configurable with `PROVENIX_GIT_HOSTS`). The URL must be plain `https://host/owner/repo` with no credentials, query or port. The tool runs a shallow clone (`--depth 1`, no tags, no submodules, no LFS content, HTTPS only, git prompts disabled) into `data/checkouts/<app_id>/` with a 120-second timeout and a 100 MB limit, and records the commit SHA so findings tie to an exact version. A failed fetch creates no application. Private repositories are out of scope for the POC. The clone happens once at onboarding and the local copy is reused, so a demo does not need the network afterwards.
+
+**Sample apps as public repos.** The two sample apps are also published as public repos (`provenix-sample-hr-cv-screener`, `provenix-sample-support-chatbot`) so the URL path can be demonstrated. They hold the code and a `docs/` folder only. The answer keys stay in this tool repo under `samples/`, each with a `repo_url`, which is how a URL-onboarded sample is matched to its key. Apps from any other URL show "no expert key".
 
 ### Ingestion (`ingest.py`)
 

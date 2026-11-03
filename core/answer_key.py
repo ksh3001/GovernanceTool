@@ -31,6 +31,7 @@ class TrapCase(BaseModel):
 
 class AnswerKey(BaseModel):
     app_name: str
+    repo_url: str | None = None  # public sample repo, used to match URL-onboarded apps to their key
     framework: str
     expected_tier: str
     tier_rule: str
@@ -42,3 +43,14 @@ class AnswerKey(BaseModel):
 
 def load_answer_key(path: Path) -> AnswerKey:
     return AnswerKey(**yaml.safe_load(Path(path).read_text(encoding="utf-8")))
+
+
+def find_answer_key(samples_dir: Path, repo_url: str) -> Path | None:
+    """Path of the answer key whose repo_url matches, or None (apps without a key get no agreement score)."""
+    from .fetch import normalize_url
+    wanted = normalize_url(repo_url)
+    for path in sorted(Path(samples_dir).glob("*/answer_key.yaml")):
+        key = load_answer_key(path)
+        if key.repo_url and normalize_url(key.repo_url) == wanted:
+            return path.resolve()
+    return None

@@ -2,6 +2,7 @@
 # A compliance expert must confirm this key before any agreement score is quoted.
 # This file lives outside repo/ and docs/ so it is never shown to the assessor.
 app_name: Support Chatbot
+repo_url: https://github.com/ksh3001/provenix-sample-support-chatbot
 framework: eu_ai_act
 expected_tier: limited
 tier_rule: "Article 50(1): AI systems that interact directly with natural persons must tell them they are interacting with an AI system"

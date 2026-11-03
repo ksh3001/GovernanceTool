@@ -14,6 +14,8 @@ class AppRecord(BaseModel):
     app_id: str
     name: str
     repo_path: str = ""
+    repo_url: str = ""  # set when the code was fetched from a URL
+    repo_commit: str = ""  # exact commit that was assessed
     docs_path: str = ""
     frameworks: list[str] = Field(default_factory=list)
     answer_key_path: str = ""  # set only for bundled sample apps

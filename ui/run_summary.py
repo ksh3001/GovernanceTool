@@ -21,6 +21,10 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
         st.session_state.page = "home"
         st.rerun()
     st.title(app.name)
+    if app.repo_url:
+        st.caption(f"Source: {app.repo_url} · commit `{app.repo_commit[:10]}`")
+    else:
+        st.caption(f"Source: local folder {app.repo_path}")
     q = load_questionnaire(store, app_id)
     if q is None:
         st.error("This application has no questionnaire.")

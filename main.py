@@ -136,7 +136,7 @@ def home() -> None:
             st.caption(f"Created by {app.created_by or 'unknown'} · {app.created_at}")
             if q:
                 st.markdown(f'<p class="muted">{q.purpose}</p>', unsafe_allow_html=True)
-            st.caption("Repository: " + app.repo_path)
+            st.caption("Repository: " + (app.repo_url or app.repo_path))
             if q:
                 show_tier(app, q)
             if st.button("Open run summary", key=f"open_{app.app_id}"):

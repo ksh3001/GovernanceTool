@@ -2,6 +2,7 @@
 # A compliance expert must confirm this key before any agreement score is quoted.
 # This file lives outside repo/ and docs/ so it is never shown to the assessor.
 app_name: HR CV Screener
+repo_url: https://github.com/ksh3001/provenix-sample-hr-cv-screener
 framework: eu_ai_act
 expected_tier: high
 tier_rule: "Annex III 4(a): AI systems used for recruitment or selection of persons, in particular to filter applications and evaluate candidates"

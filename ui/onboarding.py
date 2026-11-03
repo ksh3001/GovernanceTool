@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from core.config import ROOT
 from core.onboarding import onboard_application
 from core.questionnaire import ANNEX_III_AREAS, PROHIBITED_PRACTICES, Questionnaire
 from core.store import Store
@@ -22,9 +23,13 @@ def render(store: Store) -> None:
     with st.form("onboard"):
         st.subheader("1. Application")
         name = st.text_input("Application name")
+        st.caption("Give the code either as a public repository URL or as a folder on this machine.")
+        url = st.text_input("Repository URL", placeholder="https://github.com/owner/repo",
+                            help="Public repositories only. The code is fetched read-only and never run.")
         c1, c2 = st.columns(2)
-        repo = c1.text_input("Repository folder", help="Local path to the application's source code.")
-        docs = c2.text_input("Documents folder (optional)", help="Model cards, policies, data notes.")
+        repo = c1.text_input("…or repository folder", help="Local path to the application's source code.")
+        docs = c2.text_input("Documents folder (optional)",
+                             help="Model cards, policies, data notes. Documents inside the repository are found automatically.")
 
         st.subheader("2. What it does")
         purpose = st.text_area("Intended purpose", placeholder="e.g. Ranks job applicants' CVs for recruiters.")
@@ -56,9 +61,11 @@ def render(store: Store) -> None:
                           interacts_with_people=interacts, generates_synthetic_content=synthetic,
                           prohibited_practices=prohibited)
         try:
-            record = onboard_application(store, name=name, repo_path=repo, docs_path=docs, questionnaire=q,
-                                         frameworks=frameworks, user=st.session_state.user)
-        except ValueError as exc:
+            with st.spinner("Fetching repository…" if url.strip() else "Saving…"):
+                record = onboard_application(store, name=name, repo_path=repo, repo_url=url, docs_path=docs,
+                                             questionnaire=q, frameworks=frameworks, user=st.session_state.user,
+                                             samples_dir=ROOT / "samples")
+        except ValueError as exc:  # includes FetchError
             for line in str(exc).splitlines():
                 st.error(line)
             return
