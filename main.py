@@ -11,7 +11,7 @@ from core.packs import discover_packs
 from core.samples import install_samples
 from core.tiers import load_classifier
 from core.store import Store
-from ui import onboarding
+from ui import onboarding, run_summary
 
 st.set_page_config(page_title="Provenix", page_icon="🛡️", layout="wide")
 
@@ -139,6 +139,10 @@ def home() -> None:
             st.caption("Repository: " + app.repo_path)
             if q:
                 show_tier(app, q)
+            if st.button("Open run summary", key=f"open_{app.app_id}"):
+                st.session_state.page = "app"
+                st.session_state.app_id = app.app_id
+                st.rerun()
 
 
 def sidebar() -> None:
@@ -163,6 +167,8 @@ else:
     if st.session_state.get("framework_confirmed"):
         if st.session_state.get("page") == "onboard":
             onboarding.render(store)
+        elif st.session_state.get("page") == "app":
+            run_summary.render(store, settings, st.session_state.app_id)
         else:
             home()
     else:
