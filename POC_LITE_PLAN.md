@@ -145,6 +145,14 @@ Each app is small (under about 500 lines in total) so the whole app can be sent 
 
 The answer keys are written first (Day 3) and drafted by us. A compliance expert must confirm them before the agreement score is quoted to anyone.
 
+## Agreement score (as built)
+
+The headline number counts only the controls the model had to judge ("Provenix matched the key on X of Y"). Controls decided by rule (not applicable) are shown separately as "including rule-decided". It compares the tool's own status, before any reviewer change, with the answer key. The risk tier is compared too, and each control shows whether the tool cited the expected evidence (same file name, overlapping lines). The App A trap case reports whether the tool cited the document claim as not backed by the code. A key still marked `draft_unreviewed` shows a warning on the dashboard and in the report.
+
+## Smoke test result (Day 10)
+
+Run with the fake model on two public repos, to test ingestion, the relevance filter and the report, not model accuracy. `streamlit/llm-examples` (14 files, about 430 lines) ran with full coverage. `mckaywrigley/chatbot-ui` (299 files, about 30,000 lines) cloned in 2 s and planned in about 2 s, but 5 of 9 controls came out as partial coverage, so they could only be rated "insufficient evidence". Keyword ranking is noisy on large apps: for example, logging picked UI files that matched other terms. This is the known limit of the filter and is stated in the dashboard and report footers. Larger apps need embeddings, which stay out of scope.
+
 ## Compliance score and dashboard
 
 Each application gets a dashboard page in the Streamlit app, built on Day 9.

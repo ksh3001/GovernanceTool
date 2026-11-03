@@ -1,8 +1,12 @@
 """Application page: Dashboard, Review and Run sections for each framework."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import streamlit as st
 
+from core.agreement import compute_agreement
+from core.answer_key import load_answer_key
 from core.config import Settings
 from core.controls import load_controls
 from core.findings import FindingsFile, findings_path
@@ -13,9 +17,9 @@ from core.review import ReviewFile, review_path
 from core.runplan import build_run_plan
 from core.store import Store
 from core.tiers import control_applicability, load_classifier
-from ui import dashboard, review as review_view, run_summary
+from ui import dashboard, report as report_view, review as review_view, run_summary
 
-SECTIONS = ["Dashboard", "Review", "Run"]
+SECTIONS = ["Dashboard", "Review", "Report", "Run"]
 
 
 def render(store: Store, settings: Settings, app_id: str) -> None:
@@ -34,7 +38,9 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
         st.error("This application has no questionnaire.")
         return
 
-    names = {p.id: p.name for p in discover_packs(settings.packs_dir)}
+    packs = {p.id: p for p in discover_packs(settings.packs_dir)}
+    key_path = Path(app.answer_key_path) if app.answer_key_path else None
+    answer_key = load_answer_key(key_path) if key_path and key_path.is_file() else None
     goto = st.session_state.pop("goto_section", None)
     ingested = ingest(app.repo_path, app.docs_path or None)
 
@@ -47,7 +53,7 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
         findings = store.load(app_id, findings_path(fw), FindingsFile)
         review = store.load(app_id, review_path(fw), ReviewFile)
 
-        st.header(names.get(fw, fw))
+        st.header(packs[fw].name if fw in packs else fw)
         key = f"section_{fw}"
         if goto and goto[0] == fw:
             st.session_state[key] = goto[1]
@@ -59,8 +65,14 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
             run_summary.render_run(store, settings, app, fw, controls, applic, q, tier, ingested, findings is not None)
         elif findings is None:
             st.info("No assessment has been run yet. Open the Run section to start one.")
-        elif section == "Dashboard":
-            partial = build_run_plan(ingested, controls, applic).coverage == "partial"
-            dashboard.render(fw, tier, findings, review, partial)
         else:
-            review_view.render(store, app_id, fw, findings, review, ingested)
+            agreement = (compute_agreement(findings, answer_key, tier.tier if tier else "")
+                         if answer_key and answer_key.framework == fw else None)
+            if section == "Review":
+                review_view.render(store, app_id, fw, findings, review, ingested)
+            else:
+                partial = build_run_plan(ingested, controls, applic).coverage == "partial"
+                if section == "Dashboard":
+                    dashboard.render(fw, tier, findings, review, partial, agreement)
+                else:
+                    report_view.render(app, packs[fw], tier, findings, review, agreement, partial)

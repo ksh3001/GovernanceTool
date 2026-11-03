@@ -5,6 +5,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from core.agreement import Agreement
 from core.findings import STATUS_LABELS, FindingsFile
 from core.review import ReviewFile
 from core.scoring import summarise
@@ -25,7 +26,7 @@ def _go_review(framework: str, control_id: str) -> None:
 
 
 def render(framework: str, tier: TierResult | None, findings: FindingsFile, review: ReviewFile | None,
-           coverage_partial: bool) -> None:
+           coverage_partial: bool, agreement: Agreement | None = None) -> None:
     s = summarise(findings, review)
     left, mid, right = st.columns([1.3, 1, 1])
     with left:
@@ -58,7 +59,7 @@ def render(framework: str, tier: TierResult | None, findings: FindingsFile, revi
         color=alt.Color("Status:N", legend=None, scale=alt.Scale(
             domain=[STATUS_LABELS[k] for k in STATUS_LABELS], range=[STATUS_COLOURS[k] for k in STATUS_LABELS])),
         tooltip=["Status", "Controls"]).properties(height=190)
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
     st.subheader("Top gaps")
     if not s.gaps:
@@ -71,8 +72,35 @@ def render(framework: str, tier: TierResult | None, findings: FindingsFile, revi
                 c1.caption(g.rationale[:240] + ("…" if len(g.rationale) > 240 else ""))
             c2.button("Open", key=f"gap_{framework}_{g.control_id}", on_click=_go_review, args=(framework, g.control_id))
 
+    _agreement(agreement)
+
     note = "Coverage: some relevant files were trimmed or left out for at least one control. " if coverage_partial \
         else "Coverage: every relevant file was read in full. "
     st.caption(note + "Evidence is found by keyword search, which can miss files with unusual names. "
                       f"Run finished {findings.finished_at} · mode {findings.llm_mode}"
                + (f" · commit {findings.repo_commit[:10]}" if findings.repo_commit else ""))
+
+
+def _agreement(a: Agreement | None) -> None:
+    st.subheader("Agreement with the expert")
+    if a is None:
+        st.caption("No expert answer key exists for this application, so there is no agreement score.")
+        return
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Controls matched", f"{a.assessed_agreed} of {a.assessed_total}",
+              help="Controls the model had to judge. The tool's own rating is compared with the expert key, before any reviewer changes.")
+    c2.metric("Including rule-decided", f"{a.agreed} of {a.total}")
+    c3.metric("Risk tier", "Match" if a.tier_match else "Mismatch", delta=f"tool {a.tier_tool} · expert {a.tier_expert}",
+              delta_color="off")
+    if not a.confirmed_by_expert:
+        st.warning("Draft answer key: the expected results were written by the build team and are not yet confirmed "
+                   "by a compliance expert. Do not quote this as validated accuracy.")
+    for t in a.traps:
+        (st.success if t.detected else st.error)(
+            f"Trap case ({t.control_id}): {'detected' if t.detected else 'not detected'}. {t.description}")
+    with st.expander("Control by control"):
+        for c in a.controls:
+            extra = "" if c.evidence_match is None else (" · cited the expected evidence" if c.evidence_match
+                                                          else " · did not cite the expected evidence")
+            st.markdown(f"{'✅' if c.match else '❌'} **{c.article}** · {c.title} — tool "
+                        f"{STATUS_LABELS[c.tool_status].lower()}, expert {STATUS_LABELS[c.expert_status].lower()}{extra}")

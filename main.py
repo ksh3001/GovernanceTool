@@ -6,9 +6,12 @@ import hmac
 import streamlit as st
 
 from core.config import ROOT, load_settings
+from core.findings import FindingsFile, findings_path
 from core.onboarding import load_questionnaire
 from core.packs import discover_packs
+from core.review import ReviewFile, review_path
 from core.samples import install_samples
+from core.scoring import summarise
 from core.tiers import load_classifier
 from core.store import Store
 from ui import app_page, onboarding
@@ -56,7 +59,7 @@ def sign_in() -> None:
         with st.form("signin"):
             name = st.text_input("Your name")
             password = st.text_input("Demo password", type="password") if settings.demo_password else ""
-            submitted = st.form_submit_button("Continue", type="primary", use_container_width=True)
+            submitted = st.form_submit_button("Continue", type="primary", width="stretch")
         if submitted:
             if not name.strip():
                 st.error("Please enter your name.")
@@ -120,6 +123,19 @@ def show_tier(app, questionnaire) -> None:
             st.caption(f"Rule `{result.rule_id}` · [Regulation (EU) 2024/1689]({result.source_url})")
 
 
+def show_progress(app) -> None:
+    """One line per framework: has it been assessed, and what is the score so far."""
+    for fw in app.frameworks:
+        findings = store.load(app.app_id, findings_path(fw), FindingsFile)
+        if findings is None:
+            st.caption("Not assessed yet")
+            continue
+        s = summarise(findings, store.load(app.app_id, review_path(fw), ReviewFile))
+        score = "n/a" if s.score is None else f"{s.score * 100:.0f}%"
+        st.caption(f"Assessed · compliance score {score} · {s.reviewed} of {len(findings.findings)} findings reviewed"
+                   + (" · placeholder results" if findings.llm_mode == "fake" else ""))
+
+
 def home() -> None:
     packs = {p.id: p.name for p in discover_packs(settings.packs_dir)}
     st.title("Applications")
@@ -146,6 +162,7 @@ def home() -> None:
             st.caption("Repository: " + (app.repo_url or app.repo_path))
             if q:
                 show_tier(app, q)
+            show_progress(app)
             if st.button("Open application", key=f"open_{app.app_id}"):
                 st.session_state.page = "app"
                 st.session_state.app_id = app.app_id
@@ -157,10 +174,10 @@ def sidebar() -> None:
         st.markdown('<div class="brand">🛡️ Provenix</div>', unsafe_allow_html=True)
         st.caption(f"Signed in as **{st.session_state.user}**")
         if st.session_state.get("framework_confirmed"):
-            if st.button("Change framework", use_container_width=True):
+            if st.button("Change framework", width="stretch"):
                 st.session_state.framework_confirmed = False
                 st.rerun()
-        if st.button("Sign out", use_container_width=True):
+        if st.button("Sign out", width="stretch"):
             st.session_state.clear()
             st.rerun()
         st.divider()

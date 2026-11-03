@@ -26,8 +26,12 @@ def estimate_tokens(text: str) -> int:
 
 
 def _pattern(term: str) -> re.Pattern:
-    # Match at the start of a word-ish run: "log" matches log_decision and logging, not catalog.
-    return re.compile(r"(?<![a-z])" + re.escape(term.lower()))
+    """Match a term at the start of a word. Short terms must be a whole word (plus common endings),
+    so 'log' matches log, logs, logging and audit_log but not login, logo or catalog."""
+    start = r"(?<![a-z])" + re.escape(term.lower())
+    if len(term) <= 4:
+        return re.compile(start + r"(?:s|es|ed|ing|ger|gers|ging|ged)?(?![a-z])")
+    return re.compile(start)
 
 
 class Segment(BaseModel):

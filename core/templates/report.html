@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ app.name }} · {{ pack.name }} compliance report</title>
+<style>
+  :root { --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --bg:#F8FAFC; --brand:#4F46E5; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg);
+         margin:0; line-height:1.5; }
+  .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.2rem; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 0; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  .brand { color: var(--brand); font-weight: 700; }
+  .banner { border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: .9rem; }
+  .warn { background:#FEF3C7; color:#92400E; }
+  .bad { background:#FEE2E2; color:#991B1B; }
+  .info { background:#EEF2FF; color:#3730A3; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin: 12px 0; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.75rem; font-weight:600; color:#fff; white-space:nowrap; }
+  .s-met { background:#15803D; } .s-partial { background:#A16207; } .s-not_met { background:#B91C1C; }
+  .s-insufficient_evidence { background:#475569; } .s-not_applicable { background:#94A3B8; }
+  .t-high { background:#C2410C; } .t-prohibited { background:#B91C1C; } .t-limited { background:#A16207; }
+  .t-minimal { background:#15803D; } .t-out_of_scope { background:#475569; }
+  .bars { display:grid; gap:6px; margin-top: 8px; }
+  .bar { display:grid; grid-template-columns: 170px 1fr 28px; align-items:center; gap:8px; font-size:.85rem; }
+  .bar .track { background:#EEF2F7; border-radius:6px; height:14px; overflow:hidden; }
+  .bar .fill { height:100%; border-radius:6px; }
+  .finding { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px; margin: 12px 0; page-break-inside: avoid; }
+  .finding header { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .note { font-size:.88rem; color:var(--muted); margin: 4px 0; }
+  .review { border-left: 3px solid var(--brand); padding: 4px 10px; margin: 8px 0; background:#F5F3FF; font-size:.9rem; }
+  .cv { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.78rem; border:1px solid var(--line);
+        border-radius:8px; overflow:hidden; margin:6px 0 2px; }
+  .cv .row { display:flex; } .cv .n { min-width:2.8rem; text-align:right; padding:0 .5rem; color:#94A3B8; background:#F1F5F9; }
+  .cv .t { white-space:pre-wrap; word-break:break-word; padding:0 .6rem; background:#F0FDF4; flex:1; }
+  .cv.claim .t { background:#FFFBEB; }
+  table { width:100%; border-collapse: collapse; font-size:.88rem; background:#fff; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align: top; }
+  th { background:#F1F5F9; font-size:.8rem; text-transform: uppercase; letter-spacing:.03em; color:var(--muted); }
+  footer { margin-top: 40px; font-size:.8rem; color: var(--muted); border-top:1px solid var(--line); padding-top:12px; }
+  .print-hint { font-size:.8rem; color:var(--muted); }
+  @media print {
+    body { background:#fff; } .page { padding: 0; max-width: none; } .print-hint { display:none; }
+    .finding, .card { box-shadow:none; } h2 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">Provenix</div>
+  <h1>{{ app.name }}</h1>
+  <div class="muted">{{ pack.name }} assessment · generated {{ generated_at }}{% if reviewer_names %} · reviewed by {{ reviewer_names|join(", ") }}{% endif %}</div>
+  <div class="muted">Source: {% if app.repo_url %}{{ app.repo_url }} · commit {{ app.repo_commit[:10] }}{% else %}local folder{% endif %}
+    · assessed {{ findings.finished_at }} · model mode: {{ findings.llm_mode }}</div>
+  <div class="print-hint">To save as PDF, use your browser's Print command and choose "Save as PDF".</div>
+
+  {% if findings.llm_mode == "fake" %}
+  <div class="banner bad"><strong>Placeholder results.</strong> This report was produced with the placeholder (fake) model. The findings are not real.</div>
+  {% endif %}
+  {% if pack.status != "reviewed" %}
+  <div class="banner warn"><strong>Draft control pack, pending expert review.</strong> The controls, paraphrases and tier rules in this report have not yet been confirmed by a compliance expert.</div>
+  {% endif %}
+
+  <h2>Summary</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="muted">Risk tier</div>
+      {% if tier %}<div><span class="tag t-{{ tier.tier }}" style="font-size:1rem;padding:4px 14px">{{ tier.label }}</span></div>
+      <div class="muted">{{ tier.legal_basis }}</div>{% else %}<div>No risk tiers for this framework.</div>{% endif %}
+    </div>
+    <div class="card">
+      <div class="muted">Compliance score</div>
+      <div class="big">{{ score_text }}</div>
+      <div class="muted">Internal metric, not an official EU rating.{% if summary.score != summary.tool_score %} Tool alone: {{ tool_score_text }}.{% endif %}</div>
+    </div>
+    <div class="card">
+      <div class="muted">Human review</div>
+      <div class="big">{{ summary.reviewed }} / {{ findings.findings|length }}</div>
+      <div class="muted">{{ summary.overridden }} overridden</div>
+    </div>
+    {% if agreement %}
+    <div class="card">
+      <div class="muted">Agreement with expert key</div>
+      <div class="big">{{ agreement.assessed_agreed }} / {{ agreement.assessed_total }}</div>
+      <div class="muted">model-assessed controls</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if tier %}<p>{{ tier.reason }}</p>{% endif %}
+  <p class="muted">Score = (met + 0.5 × partial) ÷ applicable controls. Not met and insufficient evidence count as 0. Not applicable controls are left out.
+    Where a reviewer overrode a finding, the score uses the reviewer's status.</p>
+
+  <div class="bars">
+    {% for row in bars %}
+    <div class="bar"><span>{{ row.label }}</span><span class="track"><span class="fill s-{{ row.key }}" style="display:block;width:{{ row.pct }}%"></span></span><span>{{ row.count }}</span></div>
+    {% endfor %}
+  </div>
+
+  {% if summary.gaps %}
+  <h2>Top gaps</h2>
+  <table>
+    <tr><th>Control</th><th>Status</th><th>Why</th></tr>
+    {% for g in summary.gaps %}
+    <tr><td><strong>{{ g.article }}</strong><br>{{ g.title }}</td><td><span class="tag s-{{ g.status }}">{{ labels[g.status] }}</span></td><td>{{ g.rationale }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  <h2>Findings</h2>
+  {% for f in findings.findings %}
+  {% set d = decisions.get(f.control_id) %}
+  {% set final = d.final_status if d else f.status %}
+  <div class="finding">
+    <header>
+      <span class="tag s-{{ final }}">{{ labels[final] }}</span>
+      <h3>{{ f.article }} · {{ f.title }}</h3>
+    </header>
+    {% if d and d.final_status != f.status %}<div class="note">Tool rated: {{ labels[f.status] }}. Changed by reviewer.</div>{% endif %}
+    {% if f.rationale %}<div>{{ f.rationale }}</div>{% endif %}
+    {% if f.verification == "verified" %}<div class="note">✓ Verified by a second check.</div>
+    {% elif f.verification == "failed" %}<div class="note">✗ Failed verification{% if f.model_status %} (was {{ labels[f.model_status]|lower }}){% endif %}.</div>
+    {% elif f.verification == "unverified" %}<div class="note">? Not verified: the second check could not run.</div>{% endif %}
+    {% for flag in f.flags %}<div class="note">⚠ {{ flag }}</div>{% endfor %}
+    {% if f.coverage == "partial" %}<div class="note">Coverage was limited: some relevant files were trimmed or left out.</div>{% endif %}
+    {% for c in f.citations %}
+    <div class="note"><strong>{% if c.role == "contradicted_claim" %}Document claim not backed by the code{% else %}Evidence{% endif %}</strong> · {{ c.area }}/{{ c.path }}:{{ c.start }}-{{ c.end }}</div>
+    <div class="cv {% if c.role == 'contradicted_claim' %}claim{% endif %}">{% for line in c.excerpt.splitlines() %}<div class="row"><div class="n">{{ c.start + loop.index0 }}</div><div class="t">{{ line }}</div></div>{% endfor %}</div>
+    <div class="note">Excerpt copied by the tool from the file · sha256 {{ c.excerpt_sha256[:12] }}</div>
+    {% endfor %}
+    {% if d %}<div class="review"><strong>{{ d.decision|capitalize }}</strong> by {{ d.reviewer }} on {{ d.at }}{% if d.note %}: “{{ d.note }}”{% endif %}</div>{% endif %}
+  </div>
+  {% endfor %}
+
+  {% if agreement %}
+  <h2>Agreement with the expert answer key</h2>
+  {% if not agreement.confirmed_by_expert %}
+  <div class="banner warn"><strong>Draft answer key.</strong> The expected results were written by the build team and have not been confirmed by a compliance expert. Do not quote this number as validated accuracy.</div>
+  {% endif %}
+  <p><strong>Provenix matched the key on {{ agreement.assessed_agreed }} of {{ agreement.assessed_total }} controls it had to judge</strong>
+    ({{ agreement.agreed }} of {{ agreement.total }} including controls decided by rule).
+    Risk tier: tool {{ agreement.tier_tool }}, expert {{ agreement.tier_expert }} — {{ "match" if agreement.tier_match else "mismatch" }}.
+    This measures the tool's own ratings, before any reviewer changes.</p>
+  <table>
+    <tr><th>Control</th><th>Tool</th><th>Expert</th><th>Result</th></tr>
+    {% for c in agreement.controls %}
+    <tr><td>{{ c.article }} · {{ c.title }}</td><td><span class="tag s-{{ c.tool_status }}">{{ labels[c.tool_status] }}</span></td>
+      <td><span class="tag s-{{ c.expert_status }}">{{ labels[c.expert_status] }}</span></td>
+      <td>{{ "Match" if c.match else "Differs" }}{% if c.evidence_match is not none %}{{ " · cited the expected evidence" if c.evidence_match else " · did not cite the expected evidence" }}{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+  {% for t in agreement.traps %}
+  <p><strong>Trap case ({{ t.control_id }}):</strong> {{ "detected" if t.detected else "not detected" }}. {{ t.description }}</p>
+  {% endfor %}
+  {% endif %}
+
+  <footer>
+    Generated by Provenix. {{ pack.name }} control pack v{{ pack.version }} ({{ pack.source }}), status: {{ pack.status }}.
+    This report supports a compliance review and is not legal advice. Evidence is found by keyword search, which can miss files with unusual names.
+    Coverage: {{ "some relevant files were trimmed or left out for at least one control" if coverage_partial else "every relevant file was read in full" }}.
+  </footer>
+</div>
+</body>
+</html>

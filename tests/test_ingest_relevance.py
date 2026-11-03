@@ -99,6 +99,15 @@ def test_word_start_matching_avoids_noise(tmp_path):
     assert score_file(g, control(["log"])) > 0
 
 
+@pytest.mark.parametrize("text,hit", [
+    ("def audit_log(): pass", True), ("logging.info('x')", True), ("log = 1", True), ("logs/", True),
+    ("login_page = 1", False), ("logo.png", False), ("catalog = 1", False), ("blog_post = 2", False),
+])
+def test_short_terms_match_whole_words_only(tmp_path, text, hit):
+    f = ingest(write(tmp_path, "m.py", text + "\n").parent).files[0]
+    assert (score_file(f, control(["log"])) > 0) is hit
+
+
 def test_sample_app_a_small_shortcut_sends_everything():
     r = ingest(SAMPLES / "hr_cv_screener" / "repo", SAMPLES / "hr_cv_screener" / "docs")
     sel = select_files(r, CONTROLS["eu-art-12"])

@@ -74,8 +74,9 @@ def test_dashboard_shows_tier_score_and_gaps(seeded):
     assert "High risk" in " ".join(m.value for m in at.markdown)
     # 7 applicable: 1 met, 1 not met, 5 insufficient  ->  1/7 = 14%
     assert metric(at, "Compliance score") == "14%" and metric(at, "Reviewed").startswith("0 of 9")
-    text = " ".join(m.value for m in at.markdown)
-    assert "Article 14" in text and "Article 9" in text and "Article 12" not in text.split("Top gaps")[-1]
+    gap_buttons = {b.key for b in at.button if b.key and b.key.startswith("gap_")}
+    assert "gap_eu_ai_act_eu-art-14" in gap_buttons and "gap_eu_ai_act_eu-art-9" in gap_buttons
+    assert "gap_eu_ai_act_eu-art-12" not in gap_buttons  # a met control is not a gap
     assert "not an official EU rating" in " ".join(c.value for c in at.caption)
 
 
@@ -120,3 +121,30 @@ def test_gap_open_button_jumps_to_review(seeded):
     at = open_app()
     next(b for b in at.button if b.key == "gap_eu_ai_act_eu-art-14").click(); at.run()
     assert at.radio(key="section_eu_ai_act").value == "Review"
+
+
+def test_dashboard_shows_agreement_with_draft_key_warning(seeded):
+    at = open_app()
+    text = " ".join(w.value for w in at.warning)
+    assert "Draft answer key" in text
+    assert next(m.value for m in at.metric if m.label == "Controls matched") == "3 of 7"  # Art. 9, 12 and 14 match the key
+    assert any("Trap case (eu-art-14): detected" in s.value for s in at.success)
+
+
+def test_report_section_offers_download_and_includes_review(seeded):
+    store, app = seeded
+    at = open_app()
+    at.radio(key="section_eu_ai_act").set_value("Report").run()
+    assert not at.exception, at.exception
+    downloads = at.get("download_button")
+    assert len(downloads) == 1 and "Download report" in downloads[0].proto.label
+
+
+def test_home_card_shows_assessment_progress(seeded):
+    store, app = seeded
+    at = AppTest.from_file(str(ROOT / "main.py"), default_timeout=60).run()
+    at.text_input[0].set_value("Asha"); at.button[0].click(); at.run()
+    at.checkbox[0].check(); at.run()
+    next(b for b in at.button if b.label == "Continue").click(); at.run()
+    captions = " ".join(c.value for c in at.caption)
+    assert "Assessed · compliance score 14%" in captions and "Not assessed yet" in captions
