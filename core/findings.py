@@ -51,6 +51,8 @@ class Finding(BaseModel):
     flags: list[str] = Field(default_factory=list)  # e.g. why a status was downgraded
     model_status: Status | None = None  # what the model said, if a guardrail changed it
     source: Literal["model", "rule"] = "model"  # rule = decided by code (not applicable)
+    verification: Literal["verified", "failed", "unverified", "skipped"] = "skipped"
+    verifier_note: str = ""
     error: str | None = None
 
 

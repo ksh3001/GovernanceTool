@@ -55,6 +55,7 @@ def setup_app(app, tmp_path, handler, mode="fake"):
 
 def run(app, tmp_path, handler, **kw):
     q, tier, ingested, applic, llm = setup_app(app, tmp_path, handler)
+    kw.setdefault("verify", False)
     result = run_assessment(app_id=app, framework="eu_ai_act", controls=CONTROLS, applicability=applic, q=q,
                             tier=tier, ingested=ingested, llm=llm, **kw)
     return result, llm

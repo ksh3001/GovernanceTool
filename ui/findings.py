@@ -32,6 +32,15 @@ def render(findings: FindingsFile) -> None:
             st.markdown(f"{badge(f.status)} **{f.article}** · {f.title}", unsafe_allow_html=True)
             if f.rationale:
                 st.write(f.rationale)
+            if f.verification == "verified":
+                st.caption("✓ Verified: a second check confirmed the cited evidence supports this rating."
+                           + (f" {f.verifier_note}" if f.verifier_note else ""))
+            elif f.verification == "failed":
+                st.caption(f"✗ Failed verification: shown as insufficient evidence"
+                           + (f" (was {STATUS_LABELS[f.model_status].lower()})" if f.model_status else "")
+                           + (f". {f.verifier_note}" if f.verifier_note else ""))
+            elif f.verification == "unverified":
+                st.caption("? Not verified: the second check could not run. Treat this rating with caution.")
             for flag in f.flags:
                 st.caption(f"⚠ {flag}")
             if f.error:

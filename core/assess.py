@@ -219,7 +219,10 @@ Progress = Callable[[int, int, str], None]
 def run_assessment(*, app_id: str, framework: str, controls: list[Control], applicability: list[Applicability],
                    q: Questionnaire, tier: TierResult | None, ingested: IngestResult, llm: LLMClient,
                    repo_commit: str = "", budget_tokens: int = DEFAULT_BUDGET_TOKENS,
-                   progress: Progress | None = None, log: Callable[[dict], None] | None = None) -> FindingsFile:
+                   progress: Progress | None = None, log: Callable[[dict], None] | None = None,
+                   verify: bool = True) -> FindingsFile:
+    from .verify import needs_verification, verify_finding  # imported here: verify.py imports this module
+
     out = FindingsFile(app_id=app_id, framework=framework, tier=tier.tier if tier else "",
                        tier_label=tier.label if tier else "", repo_commit=repo_commit, llm_mode=llm.mode)
     applies = {a.control_id: a for a in applicability}
@@ -229,9 +232,14 @@ def run_assessment(*, app_id: str, framework: str, controls: list[Control], appl
         a = applies[control.id]
         finding = (assess_control(control, q, tier, ingested, llm, budget_tokens, app_id)
                    if a.applies else not_applicable_finding(control, a))
+        if verify and needs_verification(finding):
+            if progress:
+                progress(i - 1, len(controls), f"{control.article}: verifying citations")
+            verify_finding(control, finding, llm, app_id)
         out.findings.append(finding)
         if log:
             log({"at": now(), "control": control.id, "status": finding.status, "model_status": finding.model_status,
+                 "verification": finding.verification,
                  "coverage": finding.coverage, "citations": len(finding.citations), "flags": finding.flags,
                  "files": [f.key for f in finding.files_considered], "error": finding.error})
     out.finished_at = now()
