@@ -9,6 +9,7 @@ from core.config import ROOT, load_settings
 from core.onboarding import load_questionnaire
 from core.packs import discover_packs
 from core.samples import install_samples
+from core.tiers import load_classifier
 from core.store import Store
 from ui import onboarding
 
@@ -90,6 +91,28 @@ def framework_picker() -> None:
         st.rerun()
 
 
+TIER_STYLE = {"prohibited": "#B91C1C", "high": "#C2410C", "limited": "#A16207",
+              "minimal": "#15803D", "out_of_scope": "#475569"}
+
+
+def show_tier(app, questionnaire) -> None:
+    """Risk-tier badge and the rule that set it, for each framework that has tier rules."""
+    for fw in app.frameworks:
+        classify = load_classifier(settings.packs_dir / fw)
+        if classify is None:
+            continue
+        result = classify(questionnaire)
+        colour = TIER_STYLE.get(result.tier, "#475569")
+        st.markdown(f'<span class="tag" style="background:{colour};color:#fff">{result.label}</span> '
+                    f'<span class="muted">{result.legal_basis}</span>', unsafe_allow_html=True)
+        with st.expander("Why this tier?"):
+            st.write(result.reason)
+            for step in result.steps:
+                st.markdown(f"{'✅' if step.matched else '▫️'} {step.question}"
+                            + (f" — _{step.detail}_" if step.detail else ""))
+            st.caption(f"Rule `{result.rule_id}` · [Regulation (EU) 2024/1689]({result.source_url})")
+
+
 def home() -> None:
     packs = {p.id: p.name for p in discover_packs(settings.packs_dir)}
     st.title("Applications")
@@ -114,6 +137,8 @@ def home() -> None:
             if q:
                 st.markdown(f'<p class="muted">{q.purpose}</p>', unsafe_allow_html=True)
             st.caption("Repository: " + app.repo_path)
+            if q:
+                show_tier(app, q)
 
 
 def sidebar() -> None:
