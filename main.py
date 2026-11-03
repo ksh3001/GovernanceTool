@@ -11,7 +11,7 @@ from core.packs import discover_packs
 from core.samples import install_samples
 from core.tiers import load_classifier
 from core.store import Store
-from ui import onboarding, run_summary
+from ui import app_page, onboarding
 
 st.set_page_config(page_title="Provenix", page_icon="🛡️", layout="wide")
 
@@ -26,6 +26,13 @@ CSS = """
   .tag-ok {background:#DCFCE7; color:#166534;}
   .tag-soon {background:#E2E8F0; color:#475569;}
   .muted {color:#64748B; font-size:.9rem;}
+  .cv {font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.82rem;
+       border:1px solid #E2E8F0; border-radius:8px; overflow-x:auto; background:#fff; margin:.25rem 0;}
+  .cv .row {display:flex;}
+  .cv .n {min-width:3rem; text-align:right; padding:0 .6rem; color:#94A3B8; background:#F1F5F9; user-select:none;}
+  .cv .t {white-space:pre; padding:0 .6rem; flex:1;}
+  .cv .hit {background:#DCFCE7;}
+  .cv .claim {background:#FEF3C7;}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -139,7 +146,7 @@ def home() -> None:
             st.caption("Repository: " + (app.repo_url or app.repo_path))
             if q:
                 show_tier(app, q)
-            if st.button("Open run summary", key=f"open_{app.app_id}"):
+            if st.button("Open application", key=f"open_{app.app_id}"):
                 st.session_state.page = "app"
                 st.session_state.app_id = app.app_id
                 st.rerun()
@@ -168,7 +175,7 @@ else:
         if st.session_state.get("page") == "onboard":
             onboarding.render(store)
         elif st.session_state.get("page") == "app":
-            run_summary.render(store, settings, st.session_state.app_id)
+            app_page.render(store, settings, st.session_state.app_id)
         else:
             home()
     else:
