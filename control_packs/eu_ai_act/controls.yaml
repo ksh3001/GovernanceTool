@@ -1,0 +1,125 @@
+# EU AI Act control pack. DRAFT: pending compliance-expert review.
+# Source: Regulation (EU) 2024/1689. Paraphrases are ours. Quotes are short
+# fragments, checked against the published article text; the expert confirms
+# them against the Official Journal version before the pack is marked reviewed.
+# applies_to_tiers decides "not applicable" in code, never the model.
+
+controls:
+  - id: eu-art-9
+    article: "Article 9"
+    title: Risk management system
+    paraphrase: >
+      A documented, continuous risk management process runs across the whole
+      lifecycle of a high-risk AI system: risks are identified, evaluated,
+      mitigated and the process is reviewed and updated regularly.
+    quote: "A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    search_terms: [risk, risk management, hazard, mitigation, threat, impact assessment, residual risk, lifecycle, review]
+
+  - id: eu-art-10
+    article: "Article 10"
+    title: Data and data governance
+    paraphrase: >
+      Training, validation and testing data follow documented governance
+      practices: design choices, data origin and preparation, bias checks, and
+      data that is relevant, representative and as free of errors as possible.
+    quote: "Training, validation and testing data sets shall be subject to data governance and management practices"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    search_terms: [training data, dataset, data governance, bias, representative, data quality, provenance, validation, anonymi, personal data]
+
+  - id: eu-art-11
+    article: "Article 11"
+    title: Technical documentation
+    paraphrase: >
+      Technical documentation is drawn up before the system is placed on the
+      market and kept up to date. It shows the system meets the requirements and
+      covers at least the elements listed in Annex IV (design, development,
+      performance, monitoring).
+    quote: "shall be drawn up before that system is placed on the market or put into service and shall be kept up-to date."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    search_terms: [model card, technical documentation, architecture, intended purpose, accuracy, performance, metrics, limitations, version, design]
+
+  - id: eu-art-12
+    article: "Article 12"
+    title: Record-keeping (logging)
+    paraphrase: >
+      The system automatically records events (logs) over its lifetime so that
+      its functioning can be traced, risks identified and its operation
+      monitored after deployment.
+    quote: "High-risk AI systems shall technically allow for the automatic recording of events (logs) over the lifetime of the system."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: code
+    applies_to_tiers: [high]
+    search_terms: [log, logging, audit, trace, event, timestamp, retention, record, telemetry]
+
+  - id: eu-art-13
+    article: "Article 13"
+    title: Transparency and information to deployers
+    paraphrase: >
+      The system is transparent enough for deployers to interpret its output and
+      use it appropriately, and comes with clear instructions for use covering
+      purpose, capabilities, limits and accuracy.
+    quote: "transparent to enable deployers to interpret a system’s output and use it appropriately."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    search_terms: [instructions for use, explain, explanation, interpret, confidence, score, limitations, intended purpose, user guide, deployer]
+
+  - id: eu-art-14
+    article: "Article 14"
+    title: Human oversight
+    paraphrase: >
+      The system is designed so that people can effectively oversee it while it
+      is in use, with the ability to understand, monitor, override or stop it,
+      and not to rely blindly on its output.
+    quote: "that they can be effectively overseen by natural persons"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    search_terms: [human review, human oversight, override, approve, manual, escalate, human in the loop, reject, decision, stop, automatic]
+
+  - id: eu-art-15
+    article: "Article 15"
+    title: Accuracy, robustness and cybersecurity
+    paraphrase: >
+      The system reaches an appropriate level of accuracy, robustness and
+      cybersecurity, declares its accuracy metrics, and performs consistently
+      across its lifecycle, including resilience to errors and attacks.
+    quote: "High-risk AI systems shall be designed and developed in such a way that they achieve an appropriate level of accuracy,"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    search_terms: [accuracy, robust, test, evaluation, metrics, security, adversarial, error handling, validation, fallback, retry]
+
+  - id: eu-art-50-1
+    article: "Article 50(1)"
+    title: Disclosure of AI interaction
+    paraphrase: >
+      Systems that interact directly with people are built so those people are
+      told they are talking to an AI system, unless that is obvious from the
+      context.
+    quote: "are designed and developed in such a way that the natural persons concerned are informed that they are interacting"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high, limited]
+    search_terms: [disclosure, disclose, ai assistant, chatbot, you are talking to, virtual assistant, notice, interacting with, bot, banner]
+
+  - id: eu-art-50-2
+    article: "Article 50(2)"
+    title: Marking of AI-generated content
+    paraphrase: >
+      Providers of systems that generate synthetic audio, image, video or text
+      ensure the outputs are marked in a machine-readable format and detectable
+      as artificially generated.
+    quote: "shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: code
+    applies_to_tiers: [high, limited]
+    applies_if: generates_synthetic_content
+    search_terms: [watermark, metadata, generated, synthetic, label, c2pa, provenance, machine-readable, ai-generated]

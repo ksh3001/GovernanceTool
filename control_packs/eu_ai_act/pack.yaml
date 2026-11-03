@@ -1,0 +1,10 @@
+id: eu_ai_act
+name: EU AI Act
+version: "0.1-draft"
+source: "Regulation (EU) 2024/1689"
+source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+has_tiers: true
+reviewer: null          # set to the expert's name once reviewed
+reviewed_on: null
+status: draft           # draft | reviewed
+description: "Risk tier and obligations for AI systems under the EU AI Act."
