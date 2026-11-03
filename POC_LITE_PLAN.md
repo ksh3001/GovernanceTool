@@ -197,6 +197,15 @@ The core plan is now 10 days with the filter included. Sign-in and the picker mo
 7. Show the dashboard (tier, compliance score, top gaps), then the report and the agreement score (2 min).
 8. Show a failure honestly (1 min): an "insufficient evidence" result, and why that is the safe default.
 
+## Demo hardening (Day 13, as built)
+
+- **Replay cache.** Replay mode answers only from a saved file, `demo/replay_cache.jsonl` (override with `PROVENIX_REPLAY_CACHE`). Live mode still writes to `data/replay/` and never to the committed file, so a private app can never leak into it. The cache key is the exact system and prompt text; the app id is not part of it, so re-onboarding the same app still hits the cache.
+- **Two commands.** `python scripts/record_demo.py` runs both sample apps against the live model, saves the answers and prints every finding and the agreement with the answer keys. `python scripts/check_demo.py` replays both apps offline and ends with DEMO READY or says the saved run no longer matches. Run it before every demo and after any change to prompts, controls, search terms or samples.
+- **Honest labelling.** Replayed runs show a banner on the dashboard and in the report; placeholder runs keep their warning.
+- **Demo path.** The recording is made from the local sample folders ("Load sample apps"). A repo-URL onboarding has different files and so has no recording. `DEMO_SCRIPT.md` has the walk-through, what not to claim, fixes for common problems and a rehearsal log.
+- **Not done until keys exist:** the recording itself, so `demo/replay_cache.jsonl` does not exist yet; and the two rehearsals, which need that recording. The machinery is tested with a scripted stand-in for the live model.
+- **Housekeeping.** A verifier test had been writing its model-call log into `control_packs/logs/`, which was committed by mistake. It now uses a temporary folder and the folder is ignored.
+
 ## Risks
 
 - **Live LLM flakiness during the demo.** Mitigate with the cached run and a "replay" toggle.

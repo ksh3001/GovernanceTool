@@ -63,6 +63,9 @@
   {% if findings.llm_mode == "fake" %}
   <div class="banner bad"><strong>Placeholder results.</strong> This report was produced with the placeholder (fake) model. The findings are not real.</div>
   {% endif %}
+  {% if findings.llm_mode == "replay" %}
+  <div class="banner"><strong>Replayed run.</strong> These answers were recorded earlier from a live model and replayed from a saved file.</div>
+  {% endif %}
   {% if pack.status != "reviewed" %}
   <div class="banner warn"><strong>Draft control pack, pending expert review.</strong> The controls, paraphrases and tier rules in this report have not yet been confirmed by a compliance expert.</div>
   {% endif %}

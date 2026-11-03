@@ -50,6 +50,9 @@ def render(framework: str, tier: TierResult | None, findings: FindingsFile, revi
         st.info(f"{s.stale_decisions} review decision(s) from an earlier run are not applied.")
     if findings.llm_mode == "fake":
         st.warning("Placeholder (fake) model results: the numbers below are not real findings.")
+    elif findings.llm_mode == "replay":
+        st.info("Replayed run: these answers were recorded earlier from a live model and replayed from a saved file. "
+                "No model was called just now.")
 
     st.subheader("Controls by status")
     df = pd.DataFrame({"Status": [STATUS_LABELS[k] for k in STATUS_LABELS], "Controls": list(s.counts.values())})

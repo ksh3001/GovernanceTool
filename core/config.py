@@ -30,6 +30,7 @@ class Settings:
     azure_api_version: str
     data_dir: Path
     packs_dir: Path
+    replay_cache: Path | None = None  # recorded demo responses, read in replay mode
 
 
 def load_settings() -> Settings:
@@ -46,4 +47,5 @@ def load_settings() -> Settings:
         azure_api_version=os.environ.get("AZURE_OPENAI_API_VERSION", "2024-10-21"),
         data_dir=Path(os.environ.get("PROVENIX_DATA_DIR", ROOT / "data")),
         packs_dir=Path(os.environ.get("PROVENIX_PACKS_DIR", ROOT / "control_packs")),
+        replay_cache=Path(os.environ.get("PROVENIX_REPLAY_CACHE", ROOT / "demo" / "replay_cache.jsonl")),
     )

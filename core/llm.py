@@ -29,8 +29,10 @@ class LLMResult:
     cached: bool = False
 
 
-def _key(system: str, prompt: str, purpose: str) -> str:
-    return hashlib.sha256(json.dumps([purpose, system, prompt]).encode()).hexdigest()
+def _key(system: str, prompt: str) -> str:
+    """Cache key from the exact text sent. The purpose (which carries the app id) is left out on purpose,
+    so re-onboarding the same app still finds its recorded answers."""
+    return hashlib.sha256(json.dumps([system, prompt]).encode()).hexdigest()
 
 
 class LLMClient:
@@ -44,12 +46,12 @@ class LLMClient:
 
     def complete(self, prompt: str, system: str = "", purpose: str = "general") -> LLMResult:
         started = time.time()
-        key = _key(system, prompt, purpose)
+        key = _key(system, prompt)
         cached = False
         if self.mode == "fake":
             text = self.fake_handler(system, prompt)
         elif self.mode == "replay":
-            text = self._cache_get(key)
+            text = self._cache_get(key, purpose)
             cached = True
         else:
             text = self._live(system, prompt)
@@ -73,13 +75,15 @@ class LLMClient:
         resp = self._client.chat.completions.create(model=s.azure_deployment, messages=messages, temperature=0)
         return resp.choices[0].message.content or ""
 
-    def _cache_get(self, key: str) -> str:
-        if self.cache_path.is_file():
-            for line in self.cache_path.read_text(encoding="utf-8").splitlines():
-                entry = json.loads(line)
-                if entry["key"] == key:
-                    return entry["text"]
-        raise ReplayMiss("No recorded response for this call; run once in live mode first.")
+    def _cache_get(self, key: str, purpose: str = "") -> str:
+        paths = [p for p in (self.settings.replay_cache, self.cache_path) if p]
+        for path in paths:
+            if path.is_file():
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    if line.strip() and json.loads(line)["key"] == key:
+                        return json.loads(line)["text"]
+        raise ReplayMiss(f"No recorded response for this call ({purpose or 'unknown'}). The saved demo run does not "
+                         "cover this application as it is now; record it once in live mode.")
 
     def _cache_put(self, key: str, text: str) -> None:
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)

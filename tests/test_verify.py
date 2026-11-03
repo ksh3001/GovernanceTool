@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 import json
 import re
 
@@ -49,14 +52,14 @@ A14 = {"status": "not_met", "rationale": "Candidates are rejected automatically.
 OK = {"verdict": "supported", "reason": "The excerpts show it.", "citations": [{"index": 0, "supports": True}]}
 
 
-def run(handler, assess_controls=("eu-art-12", "eu-art-14"), **kw):
+def run(handler, assess_controls=("eu-art-12", "eu-art-14"), data_dir=None, **kw):
     q = Questionnaire.model_validate_json((SAMPLES / "hr_cv_screener" / "questionnaire.json").read_text(encoding="utf-8"))
     tier = load_classifier(PACK)(q)
     ingested = ingest(SAMPLES / "hr_cv_screener" / "repo", SAMPLES / "hr_cv_screener" / "docs")
     controls = [BY_ID[c] for c in assess_controls]
     return run_assessment(app_id="a", framework="eu_ai_act", controls=controls,
                           applicability=control_applicability(controls, tier.tier, q), q=q, tier=tier,
-                          ingested=ingested, llm=LLMClient(settings(PACK.parent), fake_handler=handler), **kw)
+                          ingested=ingested, llm=LLMClient(settings(data_dir or Path(tempfile.mkdtemp())), fake_handler=handler), **kw)
 
 
 def test_supported_finding_is_marked_verified():
