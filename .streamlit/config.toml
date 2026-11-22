@@ -1,10 +1,34 @@
+# Provenix themes. Streamlit offers Light, Dark and "Use system setting" in the
+# top-right menu (three dots > Settings > Theme). Both palettes are defined here so every
+# built-in widget and chart follows the choice.
+
 [theme]
-base = "light"
 primaryColor = "#4F46E5"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#0F172A"
 font = "sans serif"
+baseRadius = "0.6rem"
+buttonRadius = "0.6rem"
+showSidebarBorder = true
+
+[theme.light]
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#EEF2F7"
+textColor = "#0F172A"
+borderColor = "#E2E8F0"
+
+[theme.light.sidebar]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F5F9"
+
+[theme.dark]
+primaryColor = "#818CF8"
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#162033"
+textColor = "#E5E7EB"
+borderColor = "#27324A"
+
+[theme.dark.sidebar]
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#1B2740"
 
 [server]
 headless = true

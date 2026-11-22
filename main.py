@@ -6,39 +6,16 @@ import hmac
 import streamlit as st
 
 from core.config import ROOT, load_settings
-from core.findings import FindingsFile, findings_path
-from core.onboarding import load_questionnaire
+from core.overview import build_overview
 from core.packs import discover_packs
-from core.review import ReviewFile, review_path
-from core.samples import install_samples
-from core.scoring import summarise
-from core.tiers import load_classifier
 from core.store import Store
-from ui import app_page, onboarding
+from ui import app_page, home, onboarding, style
+from ui import components as ui
+from ui.nav import footer, go, header
 
 st.set_page_config(page_title="Provenix", page_icon="🛡️", layout="wide")
 
-CSS = """
-<style>
-  .block-container {padding-top: 2rem; max-width: 1100px;}
-  h1, h2, h3 {letter-spacing: -0.02em;}
-  .brand {font-size: 1.4rem; font-weight: 700; color: #4F46E5;}
-  .tag {display:inline-block; padding: 2px 10px; border-radius: 999px; font-size: .75rem;
-        font-weight: 600; margin-right: 6px;}
-  .tag-draft {background:#FEF3C7; color:#92400E;}
-  .tag-ok {background:#DCFCE7; color:#166534;}
-  .tag-soon {background:#E2E8F0; color:#475569;}
-  .muted {color:#64748B; font-size:.9rem;}
-  .cv {font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.82rem;
-       border:1px solid #E2E8F0; border-radius:8px; overflow-x:auto; background:#fff; margin:.25rem 0;}
-  .cv .row {display:flex;}
-  .cv .n {min-width:3rem; text-align:right; padding:0 .6rem; color:#94A3B8; background:#F1F5F9; user-select:none;}
-  .cv .t {white-space:pre; padding:0 .6rem; flex:1;}
-  .cv .hit {background:#DCFCE7;}
-  .cv .claim {background:#FEF3C7;}
-</style>
-"""
-st.markdown(CSS, unsafe_allow_html=True)
+style.apply()
 
 
 @st.cache_resource
@@ -101,99 +78,55 @@ def framework_picker() -> None:
         st.rerun()
 
 
-TIER_STYLE = {"prohibited": "#B91C1C", "high": "#C2410C", "limited": "#A16207",
-              "minimal": "#15803D", "out_of_scope": "#475569"}
-
-
-def show_tier(app, questionnaire) -> None:
-    """Risk-tier badge and the rule that set it, for each framework that has tier rules."""
-    for fw in app.frameworks:
-        classify = load_classifier(settings.packs_dir / fw)
-        if classify is None:
-            continue
-        result = classify(questionnaire)
-        colour = TIER_STYLE.get(result.tier, "#475569")
-        st.markdown(f'<span class="tag" style="background:{colour};color:#fff">{result.label}</span> '
-                    f'<span class="muted">{result.legal_basis}</span>', unsafe_allow_html=True)
-        with st.expander("Why this tier?"):
-            st.write(result.reason)
-            for step in result.steps:
-                st.markdown(f"{'✅' if step.matched else '▫️'} {step.question}"
-                            + (f" — _{step.detail}_" if step.detail else ""))
-            st.caption(f"Rule `{result.rule_id}` · [Regulation (EU) 2024/1689]({result.source_url})")
-
-
-def show_progress(app) -> None:
-    """One line per framework: has it been assessed, and what is the score so far."""
-    for fw in app.frameworks:
-        findings = store.load(app.app_id, findings_path(fw), FindingsFile)
-        if findings is None:
-            st.caption("Not assessed yet")
-            continue
-        s = summarise(findings, store.load(app.app_id, review_path(fw), ReviewFile))
-        score = "n/a" if s.score is None else f"{s.score * 100:.0f}%"
-        st.caption(f"Assessed · compliance score {score} · {s.reviewed} of {len(findings.findings)} findings reviewed"
-                   + (" · placeholder results" if findings.llm_mode == "fake" else ""))
-
-
-def home() -> None:
-    packs = {p.id: p.name for p in discover_packs(settings.packs_dir)}
-    st.title("Applications")
-    st.caption("Frameworks: " + ", ".join(packs[f] for f in st.session_state.frameworks))
-    if flash := st.session_state.pop("flash", None):
-        st.success(flash)
-    if st.button("Onboard an application", type="primary"):
-        st.session_state.page = "onboard"
-        st.rerun()
-    if st.button("Load sample apps", help="Adds the HR CV Screener and Support Chatbot demo applications."):
-        added = install_samples(store, ROOT / "samples", st.session_state.frameworks, st.session_state.user)
-        st.session_state.flash = f"Loaded {len(added)} sample app(s)." if added else "Sample apps are already loaded."
-        st.rerun()
-    apps = store.list_apps()
-    if not apps:
-        st.info("No applications yet.")
-    for app in apps:
-        with st.container(border=True):
-            st.subheader(app.name)
-            q = load_questionnaire(store, app.app_id)
-            st.caption(f"Created by {app.created_by or 'unknown'} · {app.created_at}")
-            if q:
-                st.markdown(f'<p class="muted">{q.purpose}</p>', unsafe_allow_html=True)
-            st.caption("Repository: " + (app.repo_url or app.repo_path))
-            if q:
-                show_tier(app, q)
-            show_progress(app)
-            if st.button("Open application", key=f"open_{app.app_id}"):
-                st.session_state.page = "app"
-                st.session_state.app_id = app.app_id
-                st.rerun()
-
-
-def sidebar() -> None:
+def sidebar_top() -> None:
+    """Brand, profile and the main menu. Pages add their own section below this."""
     with st.sidebar:
         st.markdown('<div class="brand">🛡️ Provenix</div>', unsafe_allow_html=True)
-        st.caption(f"Signed in as **{st.session_state.user}**")
+        st.caption("AI governance assessment")
+        st.markdown(ui.profile(st.session_state.user), unsafe_allow_html=True)
+        if not st.session_state.get("framework_confirmed"):
+            return
+        page = st.session_state.get("page", "home")
+        st.markdown('<div class="navlabel">Main</div>', unsafe_allow_html=True)
+        for label, target, active in (("📊  Overview", "home", page in ("home", "app")),
+                                      ("➕  Onboard an application", "onboard", page == "onboard")):
+            st.button(label, key=f"nav_{target}", width="stretch", type="primary" if active else "secondary",
+                      on_click=go, args=(target,))
+
+
+def sidebar_bottom(overview) -> None:
+    with st.sidebar:
         if st.session_state.get("framework_confirmed"):
-            if st.button("Change framework", width="stretch"):
-                st.session_state.framework_confirmed = False
-                st.rerun()
+            st.markdown('<div class="navlabel">More</div>', unsafe_allow_html=True)
+            st.button("🧭  Frameworks", key="nav_frameworks", width="stretch", on_click=go, args=("frameworks",))
+            names = {p.id: p.name for p in discover_packs(settings.packs_dir)}
+            chips = "".join(f'<span class="chip">{ui.E(names.get(f, f))}</span>' for f in st.session_state.get("frameworks", []))
+            reviewed, total = overview.reviewed, overview.total
+            st.markdown(
+                '<div class="sidecard"><div class="t">Review progress</div>'
+                + (ui.meter(100 * reviewed / total) + f'<div style="margin-top:.35rem">{reviewed} of {total} findings reviewed</div>'
+                   if total else '<div>No assessments yet.</div>')
+                + f'<div style="margin-top:.5rem">{chips}</div></div>', unsafe_allow_html=True)
         if st.button("Sign out", width="stretch"):
             st.session_state.clear()
             st.rerun()
-        st.divider()
-        st.caption(f"LLM mode: `{settings.llm_mode}`")
 
 
 if "user" not in st.session_state:
     sign_in()
 else:
-    sidebar()
+    apps = store.list_apps()
+    overview = build_overview(store, apps, settings.packs_dir)
+    sidebar_top()
     if st.session_state.get("framework_confirmed"):
         if st.session_state.get("page") == "onboard":
+            header("Applications", "Onboard an application", mode=settings.llm_mode)
             onboarding.render(store)
         elif st.session_state.get("page") == "app":
             app_page.render(store, settings, st.session_state.app_id)
         else:
-            home()
+            home.render(store, settings, overview, apps)
     else:
         framework_picker()
+    sidebar_bottom(overview)
+footer()

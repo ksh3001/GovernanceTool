@@ -146,5 +146,83 @@ def test_home_card_shows_assessment_progress(seeded):
     at.text_input[0].set_value("Asha"); at.button[0].click(); at.run()
     at.checkbox[0].check(); at.run()
     next(b for b in at.button if b.label == "Continue").click(); at.run()
-    captions = " ".join(c.value for c in at.caption)
-    assert "Assessed · compliance score 14%" in captions and "Not assessed yet" in captions
+    assert not at.exception, at.exception
+    html = " ".join(m.value for m in at.markdown)
+    assert "Assessed · score 14%" in html and "Not assessed yet" in html  # per-application status pills
+    assert "Good " in html and "Average compliance score" in html and "Open gaps" in html  # greeting and KPI cards
+    assert "Most common gaps" in html and "Art" in html  # ranked gaps across applications
+    assert "Placeholder results" in html  # the seeded run used the fake model
+
+
+def test_sidebar_navigation_steps_and_next_step_hint(seeded):
+    at = open_app()
+    side = " ".join(m.value for m in at.sidebar.markdown)
+    assert {"nav_home", "nav_onboard", "nav_frameworks"} <= {b.key for b in at.sidebar.button}
+    steps = at.sidebar.radio(key="section_eu_ai_act")
+    assert [o.split(" · ")[0] for o in steps.options] == ["1", "2", "3", "4"]  # numbered steps in working order
+    assert steps.options[1].endswith("(0/9)") and steps.options[0].endswith("✓") and steps.value == "Dashboard"
+    page = " ".join(m.value for m in at.markdown)
+    assert "HR CV Screener" in side and "Next step:" in page and "9 findings" in page
+    assert "Applications" in page and "Dashboard" in page  # breadcrumb
+    # sidebar navigation leaves the app and returns to the list
+    at.sidebar.button(key="nav_home").click(); at.run()
+    assert not at.exception and any(b.label == "Open application" for b in at.button)
+
+
+def test_overview_totals_across_applications(seeded):
+    from core.overview import build_overview
+    store, app = seeded
+    ov = build_overview(store, store.list_apps(), ROOT / "control_packs")
+    assert len(ov.rows) == 2 and ov.assessed_apps == 1
+    hr = next(r for r in ov.rows if r.app_id == app.app_id)
+    assert hr.assessed and hr.tier == "high" and round(hr.score, 2) == 0.14 and hr.total == 9 and hr.reviewed == 0
+    chatbot = next(r for r in ov.rows if r.app_id != app.app_id)
+    assert not chatbot.assessed and chatbot.score is None
+    assert ov.avg_score == hr.score and ov.total == 9 and ov.reviewed == 0
+    assert ov.gap_total == 6  # 1 not met + 5 insufficient evidence (HR app)
+    assert ov.top_gaps and ov.top_gaps[0].apps == 1
+
+
+def open_home():
+    at = AppTest.from_file(str(ROOT / "main.py"), default_timeout=60).run()
+    at.text_input[0].set_value("Asha"); at.button[0].click(); at.run()
+    at.checkbox[0].check(); at.run()
+    next(b for b in at.button if b.label == "Continue").click(); at.run()
+    assert not at.exception, at.exception
+    return at
+
+
+def test_next_step_buttons_open_the_right_step(seeded):
+    store, app = seeded
+    at = open_home()
+    keys = {b.key for b in at.button}
+    assert f"next_{app.app_id}" in keys and len([k for k in keys if k and k.startswith("next_")]) == 2
+    next(b for b in at.button if b.key == f"next_{app.app_id}").click(); at.run()  # HR app: 9 findings to review
+    assert not at.exception, at.exception
+    assert at.radio(key="section_eu_ai_act").value == "Review"
+
+
+def test_search_filters_application_cards(seeded):
+    at = open_home()
+    assert len([b for b in at.button if b.key and b.key.startswith("open_")]) == 2
+    at.text_input(key="app_search").set_value("chatbot").run()
+    assert [b.key for b in at.button if b.key and b.key.startswith("open_")] == ["open_support-chatbot"]
+    at.text_input(key="app_search").set_value("zzz").run()
+    assert any("No application matches" in i.value for i in at.info)
+
+
+def test_activity_feed_lists_assessment_and_review_decisions(seeded):
+    from core.overview import build_overview
+    from ui.components import activity_table, ago
+    from datetime import datetime, timezone
+    store, app = seeded
+    at = open_app()
+    at.radio(key="section_eu_ai_act").set_value("Review").run()
+    next(b for b in at.button if b.key == "save_eu_ai_act_eu-art-12").click(); at.run()  # confirm Art. 12
+    ov = build_overview(store, store.list_apps(), ROOT / "control_packs")
+    titles = [a.title for a in ov.activity]
+    assert "Assessment completed" in titles and "Finding confirmed" in titles
+    html = activity_table(ov.activity)
+    assert "Art" in html and "Completed" in html and "Met" in html
+    now = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    assert ago("2026-01-01T11:55:00+00:00", now) == "5 min ago" and ago("2025-12-30T12:00:00+00:00", now) == "2 d ago"
