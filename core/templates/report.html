@@ -108,11 +108,13 @@
   {% if summary.gaps %}
   <h2>Top gaps</h2>
   <table>
-    <tr><th>Control</th><th>Status</th><th>Why</th></tr>
+    <tr><th>Control</th><th>Status</th><th>Why</th><th>Proposed solution</th></tr>
     {% for g in summary.gaps %}
-    <tr><td><strong>{{ g.article }}</strong><br>{{ g.title }}</td><td><span class="tag s-{{ g.status }}">{{ labels[g.status] }}</span></td><td>{{ g.rationale }}</td></tr>
+    <tr><td><strong>{{ g.article }}</strong><br>{{ g.title }}</td><td><span class="tag s-{{ g.status }}">{{ labels[g.status] }}</span></td><td>{{ g.rationale }}</td>
+      <td>{% if g.remediation %}<ol style="margin:0;padding-left:18px">{% for step in g.remediation %}<li>{{ step }}</li>{% endfor %}</ol>{% endif %}</td></tr>
     {% endfor %}
   </table>
+  <p class="muted">Proposed solutions are general guidance from the control pack, not specific to this code. They are a draft until the compliance expert reviews them.</p>
   {% endif %}
 
   <h2>Findings</h2>

@@ -73,6 +73,6 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
             else:
                 partial = build_run_plan(ingested, controls, applic).coverage == "partial"
                 if section == "Dashboard":
-                    dashboard.render(fw, tier, findings, review, partial, agreement)
+                    dashboard.render(fw, tier, findings, review, partial, agreement, controls)
                 else:
-                    report_view.render(app, packs[fw], tier, findings, review, agreement, partial)
+                    report_view.render(app, packs[fw], tier, findings, review, agreement, partial, controls)

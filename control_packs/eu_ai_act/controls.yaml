@@ -2,6 +2,7 @@
 # Source: Regulation (EU) 2024/1689. Paraphrases are ours. Quotes are short
 # fragments, checked against the published article text; the expert confirms
 # them against the Official Journal version before the pack is marked reviewed.
+# remediation is general guidance written by us and shown under each gap; the expert reviews it with the pack.
 # applies_to_tiers decides "not applicable" in code, never the model.
 
 controls:
@@ -17,6 +18,10 @@ controls:
     expected_evidence: document
     applies_to_tiers: [high]
     search_terms: [risk, risk management, hazard, mitigation, threat, impact assessment, residual risk, lifecycle, review]
+    remediation:
+      - "Write a risk management procedure covering identification, evaluation, mitigation and residual risk for the intended purpose and foreseeable misuse."
+      - "Keep a risk register with an owner and a review date for each risk."
+      - "Review and update it on a fixed schedule and after any significant model, data or scope change."
 
   - id: eu-art-10
     article: "Article 10"
@@ -30,6 +35,10 @@ controls:
     expected_evidence: both
     applies_to_tiers: [high]
     search_terms: [training data, dataset, data governance, bias, representative, data quality, provenance, validation, anonymi, personal data]
+    remediation:
+      - "Document where the training, validation and test data came from and how it was prepared (a data sheet)."
+      - "Test the data for bias and representativeness for the people the system affects, and record the results."
+      - "Record data quality checks and the handling of personal data (minimisation, anonymisation, lawful basis)."
 
   - id: eu-art-11
     article: "Article 11"
@@ -44,6 +53,10 @@ controls:
     expected_evidence: document
     applies_to_tiers: [high]
     search_terms: [model card, technical documentation, architecture, intended purpose, accuracy, performance, metrics, limitations, version, design]
+    remediation:
+      - "Write technical documentation following Annex IV: purpose, design, data, performance, limits and monitoring."
+      - "Put measured accuracy figures and the test method in the model card, not only a general description."
+      - "Version the documentation with the code and update it on every release."
 
   - id: eu-art-12
     article: "Article 12"
@@ -57,6 +70,10 @@ controls:
     expected_evidence: code
     applies_to_tiers: [high]
     search_terms: [log, logging, audit, trace, event, timestamp, retention, record, telemetry]
+    remediation:
+      - "Log each decision automatically with a timestamp, a reference to the input, the output and the model version."
+      - "Make logs tamper-evident and set a retention period that matches the legal and monitoring need."
+      - "Keep personal data in logs to the minimum needed, and document who can access the logs."
 
   - id: eu-art-13
     article: "Article 13"
@@ -70,6 +87,10 @@ controls:
     expected_evidence: both
     applies_to_tiers: [high]
     search_terms: [instructions for use, explain, explanation, interpret, confidence, score, limitations, intended purpose, user guide, deployer]
+    remediation:
+      - "Write instructions for use for deployers: purpose, capabilities, known limits, accuracy and conditions of use."
+      - "Show users how to interpret the output, for example a confidence score or the main factors."
+      - "State the level of human oversight the deployer is expected to provide."
 
   - id: eu-art-14
     article: "Article 14"
@@ -83,6 +104,10 @@ controls:
     expected_evidence: both
     applies_to_tiers: [high]
     search_terms: [human review, human oversight, override, approve, manual, escalate, human in the loop, reject, decision, stop, automatic]
+    remediation:
+      - "Add a required human review step before any consequential outcome, such as a rejection, takes effect."
+      - "Let the reviewer see the reasons, override the result and stop the system."
+      - "Make the documented oversight policy match what the code does, and record each review decision."
 
   - id: eu-art-15
     article: "Article 15"
@@ -96,6 +121,10 @@ controls:
     expected_evidence: both
     applies_to_tiers: [high]
     search_terms: [accuracy, robust, test, evaluation, metrics, security, adversarial, error handling, validation, fallback, retry]
+    remediation:
+      - "Define accuracy targets, measure them on a held-out test set and publish the results in the documentation."
+      - "Add automated tests for errors, edge cases and adversarial or malformed input."
+      - "Add fallbacks, retries and input validation, and review dependencies and access controls for security."
 
   - id: eu-art-50-1
     article: "Article 50(1)"
@@ -110,6 +139,10 @@ controls:
     applies_to_tiers: [high, limited]
     applies_if: interacts_with_people
     search_terms: [disclosure, disclose, ai assistant, chatbot, you are talking to, virtual assistant, notice, interacting with, bot, banner]
+    remediation:
+      - "Tell users clearly at the start of the interaction that they are talking to an AI system."
+      - "Keep the notice visible in every channel the system is available in, and test that it appears."
+      - "Record the wording and where it is shown in the transparency note."
 
   - id: eu-art-50-2
     article: "Article 50(2)"
@@ -124,3 +157,7 @@ controls:
     applies_to_tiers: [high, limited]
     applies_if: generates_synthetic_content
     search_terms: [watermark, metadata, generated, synthetic, label, c2pa, provenance, machine-readable, ai-generated]
+    remediation:
+      - "Mark generated audio, image, video or text outputs in a machine-readable way, for example watermarks or metadata."
+      - "Check that the marking can be detected, and document the method and its limits."
+      - "If the system generates no synthetic content, record that decision in the questionnaire."

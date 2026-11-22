@@ -112,3 +112,30 @@ def test_review_roundtrip_in_store(tmp_path):
     record_decision(r, finding("c1", "met"), decision="confirmed", final_status=None, note="ok", reviewer="Asha", run="r1")
     store.save("a", "review/eu_ai_act.json", r)
     assert store.load("a", "review/eu_ai_act.json", ReviewFile).decisions["c1"].note == "ok"
+
+
+def test_gaps_carry_remediation_from_the_control_pack():
+    from core.config import ROOT
+    from core.controls import load_controls
+    controls = load_controls(ROOT / "control_packs" / "eu_ai_act")
+    assert all(len(c.remediation) >= 2 for c in controls)  # every control has proposed steps
+    fs = run_file(["not_met", "met"])
+    fs.findings[0].control_id, fs.findings[1].control_id = controls[5].id, controls[3].id  # Art. 14 not met, Art. 12 met
+    gaps = summarise(fs, None, controls).gaps
+    assert [g.control_id for g in gaps] == [controls[5].id] and gaps[0].remediation == controls[5].remediation
+    assert summarise(fs, None).gaps[0].remediation == []  # controls are optional
+
+
+def test_report_lists_proposed_solution_for_gaps():
+    from core.config import ROOT
+    from core.controls import load_controls
+    from core.models import AppRecord, PackInfo
+    from core.report import build_report_html
+    controls = load_controls(ROOT / "control_packs" / "eu_ai_act")
+    fs = run_file(["not_met"])
+    fs.findings[0].control_id = controls[5].id
+    app = AppRecord(app_id="a", name="A", repo_path="x")
+    pack = PackInfo(id="eu_ai_act", name="EU AI Act", version="0.1", source="s", status="draft")
+    html = build_report_html(app=app, pack=pack, tier=None, findings=fs, review=None, agreement=None,
+                             coverage_partial=False, controls=controls)
+    assert "Proposed solution" in html and controls[5].remediation[0].split(",")[0][:30] in html

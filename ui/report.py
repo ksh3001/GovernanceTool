@@ -13,9 +13,9 @@ from core.tiers import TierResult
 
 
 def render(app: AppRecord, pack: PackInfo, tier: TierResult | None, findings: FindingsFile,
-           review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool) -> None:
+           review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool, controls=None) -> None:
     html = build_report_html(app=app, pack=pack, tier=tier, findings=findings, review=review,
-                             agreement=agreement, coverage_partial=coverage_partial)
+                             agreement=agreement, coverage_partial=coverage_partial, controls=controls)
     c1, c2 = st.columns([1, 3])
     c1.download_button("Download report (HTML)", data=html, file_name=report_filename(app, pack.id),
                        mime="text/html", type="primary", key=f"dl_{pack.id}")

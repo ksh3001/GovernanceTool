@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from core.agreement import Agreement
+from core.controls import Control
 from core.findings import STATUS_LABELS, FindingsFile
 from core.review import ReviewFile
 from core.scoring import summarise
@@ -26,8 +27,8 @@ def _go_review(framework: str, control_id: str) -> None:
 
 
 def render(framework: str, tier: TierResult | None, findings: FindingsFile, review: ReviewFile | None,
-           coverage_partial: bool, agreement: Agreement | None = None) -> None:
-    s = summarise(findings, review)
+           coverage_partial: bool, agreement: Agreement | None = None, controls: list[Control] | None = None) -> None:
+    s = summarise(findings, review, controls)
     left, mid, right = st.columns([1.3, 1, 1])
     with left:
         st.caption("Risk tier")
@@ -74,6 +75,11 @@ def render(framework: str, tier: TierResult | None, findings: FindingsFile, revi
             if g.rationale:
                 c1.caption(g.rationale[:240] + ("…" if len(g.rationale) > 240 else ""))
             c2.button("Open", key=f"gap_{framework}_{g.control_id}", on_click=_go_review, args=(framework, g.control_id))
+            if g.remediation:
+                with st.expander("Proposed solution"):
+                    st.markdown("\n".join(f"{i}. {step}" for i, step in enumerate(g.remediation, 1)))
+                    st.caption("General guidance from the control pack, not specific to this code. "
+                               "Draft until the compliance expert reviews it.")
 
     _agreement(agreement)
 

@@ -22,8 +22,8 @@ def _pct(x: float | None) -> str:
 
 
 def build_report_html(*, app: AppRecord, pack: PackInfo, tier: TierResult | None, findings: FindingsFile,
-                      review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool) -> str:
-    summary = summarise(findings, review)
+                      review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool, controls=None) -> str:
+    summary = summarise(findings, review, controls)
     decisions = current_decisions(review, findings)
     top = max(max(summary.counts.values()), 1)
     bars = [{"key": k, "label": STATUS_LABELS[k], "count": n, "pct": round(100 * n / top)} for k, n in summary.counts.items()]

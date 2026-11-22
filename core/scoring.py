@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from .controls import Control
 from .findings import STATUS_LABELS, Finding, FindingsFile
 from .review import ReviewDecision, current_decisions, final_status, ReviewFile
 
@@ -24,6 +25,7 @@ class Gap(BaseModel):
     title: str
     status: str
     rationale: str = ""
+    remediation: list[str] = Field(default_factory=list)  # general guidance from the control pack
 
 
 class Summary(BaseModel):
@@ -37,13 +39,15 @@ class Summary(BaseModel):
     gaps: list[Gap] = Field(default_factory=list)
 
 
-def summarise(findings: FindingsFile, review: ReviewFile | None) -> Summary:
+def summarise(findings: FindingsFile, review: ReviewFile | None, controls: list[Control] | None = None) -> Summary:
+    steps = {c.id: c.remediation for c in controls or []}
     decisions: dict[str, ReviewDecision] = current_decisions(review, findings)
     finals = {f.control_id: final_status(f, decisions) for f in findings.findings}
     counts = {s: sum(v == s for v in finals.values()) for s in STATUS_LABELS}
     gaps = [Gap(control_id=f.control_id, article=f.article, title=f.title, status=finals[f.control_id],
                 rationale=(decisions[f.control_id].note if f.control_id in decisions and decisions[f.control_id].note
-                           else f.rationale))
+                           else f.rationale),
+                remediation=steps.get(f.control_id, []))
             for status in GAP_ORDER for f in findings.findings if finals[f.control_id] == status]
     return Summary(
         counts=counts, applicable=sum(v != "not_applicable" for v in finals.values()),

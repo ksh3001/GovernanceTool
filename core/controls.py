@@ -21,6 +21,7 @@ class Control(BaseModel):
     applies_to_tiers: list[Tier]
     applies_if: str | None = None  # name of a questionnaire flag that must be true
     search_terms: list[str] = Field(min_length=1)
+    remediation: list[str] = Field(default_factory=list)  # general steps to close a gap; written by us, expert-reviewed
 
     @field_validator("quote")
     @classmethod
