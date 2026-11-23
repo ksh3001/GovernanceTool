@@ -8,6 +8,7 @@ import yaml
 from pydantic import BaseModel, Field, field_validator
 
 Tier = Literal["prohibited", "high", "limited", "minimal"]
+Role = Literal["provider", "deployer"]
 
 
 class Control(BaseModel):
@@ -19,9 +20,18 @@ class Control(BaseModel):
     source_url: str
     expected_evidence: Literal["code", "document", "both"]
     applies_to_tiers: list[Tier]
-    applies_if: str | None = None  # name of a questionnaire flag that must be true
+    applies_to_roles: list[Role] = Field(default_factory=lambda: ["provider", "deployer"])
+    # Questionnaire flag(s): the control applies only if at least one is true.
+    applies_if: str | list[str] | None = None
     search_terms: list[str] = Field(min_length=1)
     remediation: list[str] = Field(default_factory=list)  # general steps to close a gap; written by us, expert-reviewed
+    origin: Literal["pack", "custom"] = "pack"  # custom = added by a user for one application
+
+    @property
+    def conditions(self) -> list[str]:
+        if not self.applies_if:
+            return []
+        return [self.applies_if] if isinstance(self.applies_if, str) else list(self.applies_if)
 
     @field_validator("quote")
     @classmethod

@@ -19,11 +19,24 @@ ANNEX_POINT = {
 RECRUITMENT_WORDS = ("recruit", "applicant", "candidate", "cv", "resume", "hiring", "shortlist", "job advert")
 
 
+CREDIT_WORDS = ("credit", "loan", "lend", "mortgage", "creditworth")
+
+
+def _area(q: Questionnaire) -> str:
+    """Annex III area, counting a declared credit or insurance use as point 5 even if no area was picked."""
+    if q.annex_iii_area == "none" and q.credit_or_insurance:
+        return "essential_services"
+    return q.annex_iii_area
+
+
 def _annex_basis(q: Questionnaire) -> str:
-    point = ANNEX_POINT[q.annex_iii_area]
-    if q.annex_iii_area == "employment":
+    area = _area(q)
+    point = ANNEX_POINT[area]
+    if area == "employment":
         text = q.purpose.lower()
         point += "(a)" if any(w in text for w in RECRUITMENT_WORDS) else "(b)"
+    elif area == "essential_services" and q.credit_or_insurance:
+        point += "(b)" if any(w in q.purpose.lower() for w in CREDIT_WORDS) else "(c)"
     return f"Annex III point {point}"
 
 
@@ -59,8 +72,9 @@ def classify(q: Questionnaire) -> TierResult:
                       "(when that product needs third-party conformity assessment).")
 
     # 3. High risk through Annex III use cases (Art. 6(2)), with the Art. 6(3) exemption
-    in_annex_iii = q.annex_iii_area != "none"
-    if check("art6_2", "Does it operate in an Annex III area?", in_annex_iii, ANNEX_III_AREAS[q.annex_iii_area]):
+    area = _area(q)
+    in_annex_iii = area != "none"
+    if check("art6_2", "Does it operate in an Annex III area?", in_annex_iii, ANNEX_III_AREAS[area]):
         basis = _annex_basis(q)
         exempt = q.narrow_procedural_task and not q.affects_individuals
         check("art6_3", "Does the Article 6(3) exemption apply (narrow task, no profiling of people)?", exempt,
@@ -68,7 +82,7 @@ def classify(q: Questionnaire) -> TierResult:
                                                     else ", but it affects individuals, so profiling cannot be ruled out"))
         if not exempt:
             return result("high", "art6_2", basis,
-                          f"It operates in an Annex III area ({ANNEX_III_AREAS[q.annex_iii_area]}), "
+                          f"It operates in an Annex III area ({ANNEX_III_AREAS[area]}), "
                           f"covered by {basis}, so it is high risk.")
         steps_note = "The provider must document this assessment under Article 6(4)."
         return result(_limited_or_minimal(q), "art6_3", "Article 6(3)",
@@ -80,6 +94,10 @@ def classify(q: Questionnaire) -> TierResult:
         duties.append("interacts directly with people")
     if q.generates_synthetic_content:
         duties.append("generates synthetic content")
+    if q.emotion_or_biometric_categorisation:
+        duties.append("recognises emotions or categorises people by biometrics")
+    if q.deep_fake:
+        duties.append("generates or manipulates deep-fake content")
     if check("art50", "Does it have Article 50 transparency duties?", bool(duties), " and ".join(duties)):
         return result("limited", "art50", "Article 50",
                       f"It {' and '.join(duties)}, which carries transparency duties but no high-risk requirements.")
@@ -91,4 +109,5 @@ def classify(q: Questionnaire) -> TierResult:
 
 
 def _limited_or_minimal(q: Questionnaire) -> str:
-    return "limited" if (q.interacts_with_people or q.generates_synthetic_content) else "minimal"
+    return "limited" if (q.interacts_with_people or q.generates_synthetic_content
+                         or q.emotion_or_biometric_categorisation or q.deep_fake) else "minimal"

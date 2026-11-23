@@ -84,7 +84,7 @@
     </div>
     <div class="card">
       <div class="muted">Human review</div>
-      <div class="big">{{ summary.reviewed }} / {{ findings.findings|length }}</div>
+      <div class="big">{{ summary.reviewed }} / {{ findings.reviewable|length }}</div>
       <div class="muted">{{ summary.overridden }} overridden</div>
     </div>
     {% if agreement %}
@@ -105,6 +105,32 @@
     {% endfor %}
   </div>
 
+  {% if scope_summary %}
+  <h2>Assessment scope</h2>
+  <p><strong>{{ scope_summary.in_scope }} rules were assessed.</strong>
+    The questionnaire proposed {{ scope_summary.proposed }} based on the risk tier, the organisation's role and its answers;
+    a reviewer removed {{ scope_summary.removed }}, added back {{ scope_summary.added }} and added {{ scope_summary.custom }} custom rule{{ "" if scope_summary.custom == 1 else "s" }}.
+    {% if scope and scope.finalised %}Scope finalised by {{ scope.finalised_by }} on {{ scope.finalised_at }}.{% else %}<em>The scope is not finalised.</em>{% endif %}</p>
+  {% set changed = scope_rules|selectattr("change")|list %}
+  {% if changed %}
+  <table>
+    <tr><th>Rule</th><th>Change</th><th>Reason</th><th>By</th></tr>
+    {% for r in changed %}
+    <tr><td><strong>{{ r.control.article }}</strong><br>{{ r.control.title }}{% if r.change == "custom" %}<div class="note">{{ r.control.paraphrase }}</div>{% endif %}</td>
+      <td>{{ {"added": "Added to scope", "removed": "Removed from scope", "custom": "Custom rule"}[r.change] }}</td>
+      <td>{{ r.change_reason or "—" }}</td><td>{{ r.changed_by }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <details><summary class="muted">Rules not applicable ({{ scope_summary.out_of_scope }}) and why</summary>
+  <table>
+    {% for r in scope_rules if not r.applies %}
+    <tr><td><strong>{{ r.control.article }}</strong> · {{ r.control.title }}</td><td>{{ r.reason }}</td></tr>
+    {% endfor %}
+  </table>
+  </details>
+  {% endif %}
+
   {% if summary.gaps %}
   <h2>Top gaps</h2>
   <table>
@@ -118,13 +144,14 @@
   {% endif %}
 
   <h2>Findings</h2>
-  {% for f in findings.findings %}
+  {% for f in findings.findings if f.status != "not_applicable" or not scope_summary %}
   {% set d = decisions.get(f.control_id) %}
   {% set final = d.final_status if d else f.status %}
   <div class="finding">
     <header>
       <span class="tag s-{{ final }}">{{ labels[final] }}</span>
       <h3>{{ f.article }} · {{ f.title }}</h3>
+      {% if f.scope_change %}<span class="tag" style="background:#6366F1">{{ {"added": "Added to scope", "removed": "Removed from scope", "custom": "Custom rule"}[f.scope_change] }}</span>{% endif %}
     </header>
     {% if d and d.final_status != f.status %}<div class="note">Tool rated: {{ labels[f.status] }}. Changed by reviewer.</div>{% endif %}
     {% if f.rationale %}<div>{{ f.rationale }}</div>{% endif %}

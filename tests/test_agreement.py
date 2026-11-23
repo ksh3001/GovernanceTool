@@ -25,13 +25,13 @@ def findings(overrides=None, citations=None):
 
 def test_perfect_match():
     a = compute_agreement(findings(), KEY, "high")
-    assert (a.agreed, a.total) == (9, 9) and a.tier_match
-    assert (a.assessed_agreed, a.assessed_total) == (7, 7)  # the two N/A controls are decided by rule
+    assert (a.agreed, a.total) == (21, 21) and a.tier_match
+    assert (a.assessed_agreed, a.assessed_total) == (13, 13)  # the eight N/A controls are decided by rule
 
 
 def test_disagreements_are_counted_per_control():
     a = compute_agreement(findings({"eu-art-12": "partial", "eu-art-14": "met"}), KEY, "high")
-    assert (a.agreed, a.assessed_agreed, a.assessed_total) == (7, 5, 7)
+    assert (a.agreed, a.assessed_agreed, a.assessed_total) == (19, 11, 13)
     assert {c.control_id for c in a.controls if not c.match} == {"eu-art-12", "eu-art-14"}
 
 

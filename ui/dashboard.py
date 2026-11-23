@@ -43,7 +43,7 @@ def render(framework: str, tier: TierResult | None, findings: FindingsFile, revi
     mid.metric("Compliance score", _pct(s.score),
                delta=None if s.score == s.tool_score else f"tool alone: {_pct(s.tool_score)}", delta_color="off",
                help="(met + 0.5 × partial) ÷ applicable controls. Uses your decisions where you overrode a finding.")
-    right.metric("Reviewed", f"{s.reviewed} of {len(findings.findings)}", delta=f"{s.overridden} overridden",
+    right.metric("Reviewed", f"{s.reviewed} of {len(findings.reviewable)}", delta=f"{s.overridden} overridden",
                  delta_color="off")
     st.caption("The compliance score is Provenix's own internal metric. It is not an official EU rating. "
                "'Not met' and 'insufficient evidence' count as 0, and 'not applicable' controls are left out.")

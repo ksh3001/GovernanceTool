@@ -1,6 +1,6 @@
 {
   "purpose": "Scores job applicants' CVs against a job description and decides who is shortlisted or rejected.",
-  "role": "deployer",
+  "role": "provider",
   "eu_market": true,
   "annex_iii_area": "employment",
   "safety_component_annex_i": false,

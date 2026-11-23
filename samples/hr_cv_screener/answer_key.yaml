@@ -57,6 +57,38 @@ controls:
     note: The system generates no synthetic content.
     evidence: []
 
+  eu-art-4:
+    status: partial
+    note: The oversight policy says recruiters get a short training on reading the output, but there is no training material, record of who completed it, or literacy measure for the people who build and run the tool.
+    evidence:
+      - {area: docs, file: oversight_policy.md, lines: [10, 10], contains: "short training", role: supports}
+  eu-art-17:
+    status: insufficient_evidence
+    note: No quality management system, procedures or change control appear in any file.
+    evidence: []
+  eu-art-43:
+    status: insufficient_evidence
+    note: No conformity assessment, EU declaration of conformity or CE marking is documented.
+    evidence: []
+  eu-art-49:
+    status: insufficient_evidence
+    note: No registration in the EU database is documented.
+    evidence: []
+  eu-art-72:
+    status: insufficient_evidence
+    note: Decisions are logged, but there is no post-market monitoring plan, metric review or drift check.
+    evidence: []
+  eu-art-73:
+    status: insufficient_evidence
+    note: No serious-incident procedure appears in any file.
+    evidence: []
+  eu-art-26: {status: not_applicable, note: "Deployer duty; the questionnaire declares the organisation as the provider.", evidence: []}
+  eu-art-27: {status: not_applicable, note: "Deployer duty, and only for public bodies or credit and insurance uses.", evidence: []}
+  eu-art-50-3: {status: not_applicable, note: "No emotion recognition or biometric categorisation.", evidence: []}
+  eu-art-50-4: {status: not_applicable, note: "No deep-fake content.", evidence: []}
+  eu-art-53: {status: not_applicable, note: "Not a general-purpose AI model.", evidence: []}
+  eu-art-55: {status: not_applicable, note: "Not a general-purpose AI model with systemic risk.", evidence: []}
+
 trap_cases:
   - control: eu-art-14
     description: The oversight policy claims human review of every rejection, but screen.py rejects and emails automatically. The finding must say the document claim is not backed by the code.

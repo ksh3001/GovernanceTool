@@ -31,4 +31,20 @@ controls:
       synthetic text, so the expert should confirm this reading.
     evidence: []
 
+  eu-art-4:
+    status: insufficient_evidence
+    note: Nothing describes AI literacy measures for the staff who run the bot or take over hand-offs.
+    evidence: []
+  eu-art-17: {status: not_applicable, note: High-risk provider duty; this system is limited risk., evidence: []}
+  eu-art-43: {status: not_applicable, note: High-risk provider duty; this system is limited risk., evidence: []}
+  eu-art-49: {status: not_applicable, note: High-risk provider duty; this system is limited risk., evidence: []}
+  eu-art-72: {status: not_applicable, note: High-risk provider duty; this system is limited risk., evidence: []}
+  eu-art-73: {status: not_applicable, note: High-risk provider duty; this system is limited risk., evidence: []}
+  eu-art-26: {status: not_applicable, note: "Deployer duty for high-risk systems only.", evidence: []}
+  eu-art-27: {status: not_applicable, note: "Deployer duty for high-risk systems only.", evidence: []}
+  eu-art-50-3: {status: not_applicable, note: "No emotion recognition or biometric categorisation.", evidence: []}
+  eu-art-50-4: {status: not_applicable, note: "No deep-fake content; the bot produces text only.", evidence: []}
+  eu-art-53: {status: not_applicable, note: "Not a general-purpose AI model.", evidence: []}
+  eu-art-55: {status: not_applicable, note: "Not a general-purpose AI model with systemic risk.", evidence: []}
+
 trap_cases: []

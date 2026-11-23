@@ -1,0 +1,19 @@
+{
+  "purpose": "Chat assistant that collects personal-loan applications from retail customers and gives an indicative pre-approval based on a credit score.",
+  "role": "provider_and_deployer",
+  "eu_market": true,
+  "annex_iii_area": "essential_services",
+  "safety_component_annex_i": false,
+  "affects_individuals": true,
+  "autonomy": "fully_automated",
+  "narrow_procedural_task": false,
+  "interacts_with_people": true,
+  "generates_synthetic_content": false,
+  "prohibited_practices": [],
+  "public_body_or_service": false,
+  "credit_or_insurance": true,
+  "emotion_or_biometric_categorisation": false,
+  "deep_fake": false,
+  "gpai_model": false,
+  "gpai_systemic_risk": false
+}

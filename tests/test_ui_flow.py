@@ -72,8 +72,8 @@ def metric(at, label):
 def test_dashboard_shows_tier_score_and_gaps(seeded):
     at = open_app()
     assert "High risk" in " ".join(m.value for m in at.markdown)
-    # 7 applicable: 1 met, 1 not met, 5 insufficient  ->  1/7 = 14%
-    assert metric(at, "Compliance score") == "14%" and metric(at, "Reviewed").startswith("0 of 9")
+    # 13 applicable: 1 met, 1 not met, 11 insufficient  ->  1/13 = 8%
+    assert metric(at, "Compliance score") == "8%" and metric(at, "Reviewed").startswith("0 of 13")
     gap_buttons = {b.key for b in at.button if b.key and b.key.startswith("gap_")}
     assert "gap_eu_ai_act_eu-art-14" in gap_buttons and "gap_eu_ai_act_eu-art-9" in gap_buttons
     assert "gap_eu_ai_act_eu-art-12" not in gap_buttons  # a met control is not a gap
@@ -103,9 +103,9 @@ def test_review_override_updates_dashboard_and_saves_audit_trail(seeded):
     assert store.load(app.app_id, findings_path("eu_ai_act"), FindingsFile).by_control()["eu-art-14"].status == "not_met"
 
     at.radio(key="section_eu_ai_act").set_value("Dashboard").run()
-    assert metric(at, "Reviewed").startswith("1 of 9")
-    assert metric(at, "Compliance score") == "21%"  # (1 met + 0.5 partial) / 7
-    assert "tool alone: 14%" in next(m.delta for m in at.metric if m.label == "Compliance score")
+    assert metric(at, "Reviewed").startswith("1 of 13")
+    assert metric(at, "Compliance score") == "12%"  # (1 met + 0.5 partial) / 13
+    assert "tool alone: 8%" in next(m.delta for m in at.metric if m.label == "Compliance score")
 
 
 def test_confirm_decision(seeded):
@@ -127,7 +127,7 @@ def test_dashboard_shows_agreement_with_draft_key_warning(seeded):
     at = open_app()
     text = " ".join(w.value for w in at.warning)
     assert "Draft answer key" in text
-    assert next(m.value for m in at.metric if m.label == "Controls matched") == "3 of 7"  # Art. 9, 12 and 14 match the key
+    assert next(m.value for m in at.metric if m.label == "Controls matched") == "8 of 13"  # Art. 9, 12, 14 and the five organisational duties match the key
     assert any("Trap case (eu-art-14): detected" in s.value for s in at.success)
 
 
@@ -148,7 +148,7 @@ def test_home_card_shows_assessment_progress(seeded):
     next(b for b in at.button if b.label == "Continue").click(); at.run()
     assert not at.exception, at.exception
     html = " ".join(m.value for m in at.markdown)
-    assert "Assessed · score 14%" in html and "Not assessed yet" in html  # per-application status pills
+    assert "Assessed · score 8%" in html and "Not assessed yet" in html  # per-application status pills
     assert "Good " in html and "Average compliance score" in html and "Open gaps" in html  # greeting and KPI cards
     assert "Most common gaps" in html and "Art" in html  # ranked gaps across applications
     assert "Placeholder results" in html  # the seeded run used the fake model
@@ -159,10 +159,10 @@ def test_sidebar_navigation_steps_and_next_step_hint(seeded):
     side = " ".join(m.value for m in at.sidebar.markdown)
     assert {"nav_home", "nav_onboard", "nav_frameworks"} <= {b.key for b in at.sidebar.button}
     steps = at.sidebar.radio(key="section_eu_ai_act")
-    assert [o.split(" · ")[0] for o in steps.options] == ["1", "2", "3", "4"]  # numbered steps in working order
-    assert steps.options[1].endswith("(0/9)") and steps.options[0].endswith("✓") and steps.value == "Dashboard"
+    assert [o.split(" · ")[0] for o in steps.options] == ["1", "2", "3", "4", "5"]  # numbered steps in working order
+    assert steps.options[2].endswith("(0/13)") and steps.options[1].endswith("✓") and steps.value == "Dashboard"
     page = " ".join(m.value for m in at.markdown)
-    assert "HR CV Screener" in side and "Next step:" in page and "9 findings" in page
+    assert "HR CV Screener" in side and "Next step:" in page and "13 findings" in page
     assert "Applications" in page and "Dashboard" in page  # breadcrumb
     # sidebar navigation leaves the app and returns to the list
     at.sidebar.button(key="nav_home").click(); at.run()
@@ -175,11 +175,11 @@ def test_overview_totals_across_applications(seeded):
     ov = build_overview(store, store.list_apps(), ROOT / "control_packs")
     assert len(ov.rows) == 2 and ov.assessed_apps == 1
     hr = next(r for r in ov.rows if r.app_id == app.app_id)
-    assert hr.assessed and hr.tier == "high" and round(hr.score, 2) == 0.14 and hr.total == 9 and hr.reviewed == 0
+    assert hr.assessed and hr.tier == "high" and round(hr.score, 2) == 0.08 and hr.total == 13 and hr.reviewed == 0
     chatbot = next(r for r in ov.rows if r.app_id != app.app_id)
     assert not chatbot.assessed and chatbot.score is None
-    assert ov.avg_score == hr.score and ov.total == 9 and ov.reviewed == 0
-    assert ov.gap_total == 6  # 1 not met + 5 insufficient evidence (HR app)
+    assert ov.avg_score == hr.score and ov.total == 13 and ov.reviewed == 0
+    assert ov.gap_total == 12  # 1 not met + 11 insufficient evidence (HR app)
     assert ov.top_gaps and ov.top_gaps[0].apps == 1
 
 
@@ -197,7 +197,7 @@ def test_next_step_buttons_open_the_right_step(seeded):
     at = open_home()
     keys = {b.key for b in at.button}
     assert f"next_{app.app_id}" in keys and len([k for k in keys if k and k.startswith("next_")]) == 2
-    next(b for b in at.button if b.key == f"next_{app.app_id}").click(); at.run()  # HR app: 9 findings to review
+    next(b for b in at.button if b.key == f"next_{app.app_id}").click(); at.run()  # HR app: 13 findings to review
     assert not at.exception, at.exception
     assert at.radio(key="section_eu_ai_act").value == "Review"
 
@@ -226,3 +226,30 @@ def test_activity_feed_lists_assessment_and_review_decisions(seeded):
     assert "Art" in html and "Completed" in html and "Met" in html
     now = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
     assert ago("2026-01-01T11:55:00+00:00", now) == "5 min ago" and ago("2025-12-30T12:00:00+00:00", now) == "2 d ago"
+
+
+def test_new_app_starts_on_the_scope_step_and_run_waits_for_finalise(seeded):
+    store, app = seeded
+    chatbot = next(a for a in store.list_apps() if a.app_id != app.app_id)
+    at = open_home()
+    next(b for b in at.button if b.key == f"open_{chatbot.app_id}").click(); at.run()
+    assert not at.exception, at.exception
+    assert at.radio(key="section_eu_ai_act").value == "Scope"
+    assert any(m.label == "Rules in scope" and m.value == "2" for m in at.metric)  # Art. 4 and Art. 50(1)
+    at.radio(key="section_eu_ai_act").set_value("Run").run()
+    assert not any(b.key == "start_eu_ai_act" for b in at.button)  # no run before the scope is finalised
+    at.radio(key="section_eu_ai_act").set_value("Scope").run()
+    next(b for b in at.button if b.key == "scope_finalise_eu_ai_act").click(); at.run()
+    assert not at.exception, at.exception
+    assert at.radio(key="section_eu_ai_act").value == "Run" and any(b.key == "start_eu_ai_act" for b in at.button)
+
+
+def test_onboarding_preview_updates_with_the_answers(seeded):
+    at = open_home()
+    next(b for b in at.button if b.key == "nav_onboard").click(); at.run()
+    assert not at.exception, at.exception
+    at.selectbox(key="ob_area").set_value("employment").run()
+    at.checkbox(key="ob_affects").check().run()
+    assert any(m.label == "Rules that apply" and m.value.startswith("13 of") for m in at.metric)
+    at.radio(key="ob_role").set_value("provider_and_deployer").run()
+    assert any(m.label == "Rules that apply" and m.value.startswith("14 of") for m in at.metric)

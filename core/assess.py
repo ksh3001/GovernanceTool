@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, ValidationError
 from .controls import Control
 from .findings import Citation, FileConsidered, Finding, FindingsFile, now
 from .ingest import IngestedFile, IngestResult
-from .llm import LLMClient
+from .llm import LLMClient, ReplayMiss
 from .questionnaire import ANNEX_III_AREAS, Questionnaire
 from .relevance import DEFAULT_BUDGET_TOKENS, Selection, select_files
 from .tiers import Applicability, TierResult
@@ -180,8 +180,15 @@ def assess_control(control: Control, q: Questionnaire, tier: TierResult | None, 
                                          f"above. Problem: {last_error}")
         try:
             raw = llm.complete(prompt + retry, system=SYSTEM_PROMPT, purpose=f"assess:{app_id}:{control.id}").text
+        except ReplayMiss:
+            if control.origin != "custom":
+                raise  # the saved run does not match the app: stop the whole run
+            return Finding(**base, status="insufficient_evidence",
+                           rationale="This custom rule was added after the demo run was recorded, so replay mode has "
+                                     "no answer for it. Run in live mode to assess it.",
+                           flags=["No recorded answer for this custom rule (replay mode)"])
         except RuntimeError:
-            raise  # configuration or replay problems stop the whole run
+            raise  # configuration problems stop the whole run
         except Exception as exc:  # network or service error for this control only
             return Finding(**base, status="insufficient_evidence", rationale="The model call failed.",
                            flags=["Model call failed"], error=f"{type(exc).__name__}: {exc}")
@@ -210,7 +217,15 @@ def assess_control(control: Control, q: Questionnaire, tier: TierResult | None, 
 
 def not_applicable_finding(control: Control, applicability: Applicability) -> Finding:
     return Finding(control_id=control.id, article=control.article, title=control.title, status="not_applicable",
-                   rationale=applicability.reason, coverage="n/a", source="rule")
+                   rationale=applicability.reason, coverage="n/a", source=applicability.decided_by)
+
+
+def _scope_change(control: Control, a: Applicability) -> str:
+    if a.decided_by != "user":
+        return ""
+    if control.origin == "custom":
+        return "custom"
+    return "added" if a.applies else "removed"
 
 
 Progress = Callable[[int, int, str], None]
@@ -220,11 +235,12 @@ def run_assessment(*, app_id: str, framework: str, controls: list[Control], appl
                    q: Questionnaire, tier: TierResult | None, ingested: IngestResult, llm: LLMClient,
                    repo_commit: str = "", budget_tokens: int = DEFAULT_BUDGET_TOKENS,
                    progress: Progress | None = None, log: Callable[[dict], None] | None = None,
-                   verify: bool = True) -> FindingsFile:
+                   verify: bool = True, scope_finalised_at: str = "") -> FindingsFile:
     from .verify import needs_verification, verify_finding  # imported here: verify.py imports this module
 
     out = FindingsFile(app_id=app_id, framework=framework, tier=tier.tier if tier else "",
-                       tier_label=tier.label if tier else "", repo_commit=repo_commit, llm_mode=llm.mode)
+                       tier_label=tier.label if tier else "", repo_commit=repo_commit, llm_mode=llm.mode,
+                       scope_finalised_at=scope_finalised_at)
     applies = {a.control_id: a for a in applicability}
     for i, control in enumerate(controls, 1):
         if progress:
@@ -232,6 +248,7 @@ def run_assessment(*, app_id: str, framework: str, controls: list[Control], appl
         a = applies[control.id]
         finding = (assess_control(control, q, tier, ingested, llm, budget_tokens, app_id)
                    if a.applies else not_applicable_finding(control, a))
+        finding.scope_change = _scope_change(control, a)  # type: ignore[assignment]
         if verify and needs_verification(finding):
             if progress:
                 progress(i - 1, len(controls), f"{control.article}: verifying citations")

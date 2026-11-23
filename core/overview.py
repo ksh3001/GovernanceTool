@@ -13,6 +13,7 @@ from .findings import STATUS_LABELS, FindingsFile, findings_path
 from .models import AppRecord
 from .onboarding import load_questionnaire
 from .review import ReviewFile, review_path
+from .scope import ScopeFile, scope_path
 from .scoring import summarise
 from .store import Store
 from .tiers import load_classifier
@@ -34,6 +35,7 @@ class AppRow(BaseModel):
     total: int = 0
     counts: dict[str, int] = Field(default_factory=dict)
     placeholder: bool = False  # results came from the fake model
+    scope_finalised: bool = False  # the rule scope of the first framework is finalised
 
 
 class Activity(BaseModel):
@@ -48,7 +50,7 @@ class NextAction(BaseModel):
     app_id: str
     app: str
     framework: str
-    section: str  # Run, Review or Report: the step to open
+    section: str  # Scope, Run, Review or Report: the step to open
     text: str
 
 
@@ -93,7 +95,9 @@ class Overview(BaseModel):
 
 def _next_action(row: AppRow) -> NextAction:
     left = row.total - row.reviewed
-    if not row.assessed:
+    if not row.assessed and not row.scope_finalised:
+        section, text = "Scope", f"Confirm the rule scope for {row.name}"
+    elif not row.assessed:
         section, text = "Run", f"Run the assessment for {row.name}"
     elif left > 0:
         section, text = "Review", f"Review {left} finding{'s' if left != 1 else ''} for {row.name}"
@@ -111,6 +115,9 @@ def build_overview(store: Store, apps: list[AppRecord], packs_dir) -> Overview:
         row = AppRow(app_id=app.app_id, name=app.name, purpose=q.purpose if q else "", repo=app.repo_url or app.repo_path,
                      framework=app.frameworks[0] if app.frameworks else "")
         scores: list[float] = []
+        if row.framework:
+            scope = store.load(app.app_id, scope_path(row.framework), ScopeFile)
+            row.scope_finalised = bool(scope and scope.finalised)
         for fw in app.frameworks:
             classify = load_classifier(packs_dir / fw)
             if q and classify and not row.tier:
@@ -123,7 +130,7 @@ def build_overview(store: Store, apps: list[AppRecord], packs_dir) -> Overview:
             s = summarise(findings, review)
             if findings.finished_at:
                 activity.append(Activity(at=findings.finished_at, app=app.name, title="Assessment completed",
-                                         detail=f"{len(findings.findings)} controls · {findings.llm_mode} mode", status="completed"))
+                                         detail=f"{len(findings.reviewable)} rules in scope · {findings.llm_mode} mode", status="completed"))
             by_control = findings.by_control()
             for d in (review.history if review else []):
                 f = by_control.get(d.control_id)
@@ -132,7 +139,7 @@ def build_overview(store: Store, apps: list[AppRecord], packs_dir) -> Overview:
                                          status=d.final_status))
             row.assessed = True
             row.reviewed += s.reviewed
-            row.total += len(findings.findings)
+            row.total += len(findings.reviewable)
             row.placeholder = row.placeholder or findings.llm_mode == "fake"
             for status, n in s.counts.items():
                 row.counts[status] = row.counts.get(status, 0) + n

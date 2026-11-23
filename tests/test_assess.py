@@ -194,9 +194,10 @@ def test_json_inside_code_fence_is_accepted():
 def test_not_applicable_controls_are_decided_by_code_without_model_calls(tmp_path):
     h = Scripted({})
     result, _ = run("support_chatbot", tmp_path, h)
-    assert h.calls == ["Article 50(1)"]
+    assert h.calls == ["Article 4", "Article 50(1)"]
     na = [f for f in result.findings if f.status == "not_applicable"]
-    assert len(na) == 8 and all(f.source == "rule" and "does not apply" in f.rationale or "applies only" in f.rationale for f in na)
+    assert len(na) == 19 and all(f.source == "rule" and ("does not apply" in f.rationale or "applies only" in f.rationale
+                                                          or "is a duty of the" in f.rationale) for f in na)
 
 
 def test_prompt_wraps_files_as_untrusted_and_neutralises_tag_injection(tmp_path):
@@ -230,7 +231,7 @@ def test_model_error_for_one_control_does_not_stop_the_run(tmp_path):
 
     result, _ = run("hr_cv_screener", tmp_path, handler)
     f = result.by_control()["eu-art-12"]
-    assert f.status == "insufficient_evidence" and "ConnectionError" in f.error and len(result.findings) == 9
+    assert f.status == "insufficient_evidence" and "ConnectionError" in f.error and len(result.findings) == 21
 
 
 def test_configuration_or_replay_errors_stop_the_run(tmp_path):
@@ -245,7 +246,7 @@ def test_progress_log_and_roundtrip(tmp_path):
     seen, logged = [], []
     result, _ = run("hr_cv_screener", tmp_path, Scripted(A_REPLIES),
                     progress=lambda done, total, label: seen.append((done, total)), log=logged.append)
-    assert seen[0] == (0, 9) and seen[-1] == (9, 9) and len(logged) == 9
+    assert seen[0] == (0, 21) and seen[-1] == (21, 21) and len(logged) == 21
     assert result.tier == "high" and result.llm_mode == "fake" and result.finished_at
     store = Store(tmp_path / "d")
     store.save("a", "findings/eu_ai_act.json", result)

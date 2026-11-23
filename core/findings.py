@@ -50,7 +50,8 @@ class Finding(BaseModel):
     files_considered: list[FileConsidered] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)  # e.g. why a status was downgraded
     model_status: Status | None = None  # what the model said, if a guardrail changed it
-    source: Literal["model", "rule"] = "model"  # rule = decided by code (not applicable)
+    source: Literal["model", "rule", "user"] = "model"  # rule = not applicable by code; user = removed from scope
+    scope_change: Literal["", "added", "removed", "custom"] = ""  # set when a person changed the proposed scope
     verification: Literal["verified", "failed", "unverified", "skipped"] = "skipped"
     verifier_note: str = ""
     error: str | None = None
@@ -65,7 +66,13 @@ class FindingsFile(BaseModel):
     llm_mode: str = ""
     started_at: str = Field(default_factory=now)
     finished_at: str = ""
+    scope_finalised_at: str = ""  # which finalised scope this run used
     findings: list[Finding] = Field(default_factory=list)
+
+    @property
+    def reviewable(self) -> list[Finding]:
+        """Findings a person should confirm or override (not-applicable ones need no decision)."""
+        return [f for f in self.findings if f.status != "not_applicable"]
 
     def by_control(self) -> dict[str, Finding]:
         return {f.control_id: f for f in self.findings}

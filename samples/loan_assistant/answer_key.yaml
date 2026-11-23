@@ -1,0 +1,106 @@
+# Expected results for sample app C. DRAFT written by the build team.
+# A compliance expert must confirm this key before any agreement score is quoted.
+# This file lives outside repo/ and docs/ so it is never shown to the assessor.
+#
+# App C is NOT added by "Load sample apps" (in_sample_set: false). It is the app you onboard
+# live in the leadership demo by filling in the questionnaire (see DEMO_SCRIPT.md).
+# Onboarding the samples/loan_assistant/repo folder attaches this key automatically.
+app_name: Loan Pre-Approval Assistant
+framework: eu_ai_act
+expected_tier: high
+tier_rule: "Annex III 5(b): AI systems used to evaluate the creditworthiness of natural persons or establish their credit score"
+status: draft_unreviewed
+reviewed_by: null
+in_sample_set: false
+
+# area: repo = source code folder, docs = documents folder. Lines are 1-based and inclusive.
+controls:
+  eu-art-4:
+    status: partial
+    note: Underwriters get a one-hour session on the model and its limits. Nothing covers the staff who build and run the system or the lending advisors.
+    evidence:
+      - {area: docs, file: underwriter_guide.md, lines: [16, 18], contains: "one-hour session", role: supports}
+  eu-art-9:
+    status: partial
+    note: A risk register lists risks, mitigations and owners, but there is no risk management process, residual-risk evaluation or review cycle.
+    evidence:
+      - {area: docs, file: risk_register.md, lines: [3, 8], contains: "Unfair outcomes", role: supports}
+  eu-art-10:
+    status: not_met
+    note: >
+      Data source, preparation and bias testing are documented, but the data sheet says postcode is excluded to
+      avoid proxy discrimination while features.py feeds a postcode default-rate feature to the model.
+      TRAP: the document claim is contradicted by the code.
+    evidence:
+      - {area: repo, file: features.py, lines: [25, 25], contains: "postcode_risk", role: supports}
+      - {area: docs, file: data_sheet.md, lines: [14, 14], contains: "Postcode and nationality are deliberately excluded", role: contradicted_claim}
+  eu-art-11:
+    status: partial
+    note: The model card covers purpose, model, measured performance, fairness and limitations, but not the design, data pipeline or monitoring that Annex IV asks for.
+    evidence:
+      - {area: docs, file: model_card.md, lines: [11, 13], contains: "AUC 0.81", role: supports}
+  eu-art-12:
+    status: met
+    note: Every decision and every underwriter override is logged automatically with timestamp, score, decision, model version, reviewer and a 7-year retention period.
+    evidence:
+      - {area: repo, file: audit_log.py, lines: [14, 28], contains: "def log_decision", role: supports}
+  eu-art-13:
+    status: partial
+    note: The underwriter guide explains how to read the calibrated score and its limits, but there are no instructions for use covering the whole system for the bank as deployer.
+    evidence:
+      - {area: docs, file: underwriter_guide.md, lines: [7, 10], contains: "How to read the score", role: supports}
+  eu-art-14:
+    status: partial
+    note: Mid-range scores go to an underwriter who can override with a logged reason, but low scores are declined and the letter is sent automatically with no human review.
+    evidence:
+      - {area: repo, file: decision.py, lines: [38, 43], contains: "automatic, no underwriter review", role: supports}
+      - {area: repo, file: decision.py, lines: [48, 54], contains: "def underwriter_override", role: supports}
+  eu-art-15:
+    status: partial
+    note: Accuracy and calibration are measured and declared, but nothing covers robustness, input validation or security.
+    evidence:
+      - {area: docs, file: model_card.md, lines: [11, 13], contains: "AUC 0.81", role: supports}
+  eu-art-17:
+    status: insufficient_evidence
+    note: No quality management system, procedures or change control appear in any file.
+    evidence: []
+  eu-art-26:
+    status: partial
+    note: Logs are kept (7 years), underwriters are assigned and trained, and monitoring runs weekly. Customers are told they are talking to an AI, but not that a high-risk system is used to decide on their loan.
+    evidence:
+      - {area: docs, file: underwriter_guide.md, lines: [12, 18], contains: "Your decision", role: supports}
+  eu-art-27:
+    status: insufficient_evidence
+    note: No fundamental rights impact assessment appears, although the bank deploys a credit-scoring system.
+    evidence: []
+  eu-art-43:
+    status: insufficient_evidence
+    note: No conformity assessment, EU declaration of conformity or CE marking is documented.
+    evidence: []
+  eu-art-49:
+    status: insufficient_evidence
+    note: No registration in the EU database is documented.
+    evidence: []
+  eu-art-50-1:
+    status: met
+    note: The first message tells customers they are talking to an AI system and how to reach a person.
+    evidence:
+      - {area: repo, file: assistant.py, lines: [8, 12], contains: "I'm an AI system, not a person", role: supports}
+  eu-art-50-2: {status: not_applicable, note: "The assistant asks fixed questions; no synthetic content declared.", evidence: []}
+  eu-art-50-3: {status: not_applicable, note: "No emotion recognition or biometric categorisation.", evidence: []}
+  eu-art-50-4: {status: not_applicable, note: "No deep-fake content.", evidence: []}
+  eu-art-53: {status: not_applicable, note: "Not a general-purpose AI model.", evidence: []}
+  eu-art-55: {status: not_applicable, note: "Not a general-purpose AI model with systemic risk.", evidence: []}
+  eu-art-72:
+    status: partial
+    note: A weekly job compares approval rates between regions and alerts on a gap, but there is no documented post-market monitoring plan or performance tracking.
+    evidence:
+      - {area: repo, file: monitoring.py, lines: [24, 27], contains: "def weekly_check", role: supports}
+  eu-art-73:
+    status: insufficient_evidence
+    note: No serious-incident procedure appears in any file.
+    evidence: []
+
+trap_cases:
+  - control: eu-art-10
+    description: The data sheet says postcode is excluded to avoid proxy discrimination, but features.py feeds a postcode default-rate feature to the model. The finding must say the document claim is not backed by the code.

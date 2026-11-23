@@ -3,9 +3,30 @@
 # fragments, checked against the published article text; the expert confirms
 # them against the Official Journal version before the pack is marked reviewed.
 # remediation is general guidance written by us and shown under each gap; the expert reviews it with the pack.
-# applies_to_tiers decides "not applicable" in code, never the model.
+# applies_to_tiers, applies_to_roles and applies_if decide "not applicable" in code, never the model.
+# applies_if may be one questionnaire flag or a list (the control applies if any of them is true).
+# Organisational duties (QMS, registration, incident reporting...) are evidenced by documents, not code:
+# when no such document is supplied the expected result is insufficient_evidence.
 
 controls:
+  - id: eu-art-4
+    article: "Article 4"
+    title: AI literacy
+    paraphrase: >
+      Providers and deployers take measures so that their staff, and others who
+      operate or use the system on their behalf, have a sufficient level of AI
+      literacy for the context the system is used in.
+    quote: "Providers and deployers of AI systems shall take measures to support the development of AI literacy"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high, limited, minimal]
+    applies_to_roles: [provider, deployer]
+    search_terms: [training, literacy, onboarding, competence, awareness, guidance, how to read, course, user guide]
+    remediation:
+      - "Set up AI literacy training for staff who build, operate or rely on the system, matched to their role."
+      - "Keep a record of who completed the training and when, and refresh it when the system changes."
+      - "Give users a short guide on what the output means and where it should not be trusted."
+
   - id: eu-art-9
     article: "Article 9"
     title: Risk management system
@@ -17,6 +38,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: document
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [risk, risk management, hazard, mitigation, threat, impact assessment, residual risk, lifecycle, review]
     remediation:
       - "Write a risk management procedure covering identification, evaluation, mitigation and residual risk for the intended purpose and foreseeable misuse."
@@ -34,6 +56,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [training data, dataset, data governance, bias, representative, data quality, provenance, validation, anonymi, personal data]
     remediation:
       - "Document where the training, validation and test data came from and how it was prepared (a data sheet)."
@@ -52,6 +75,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: document
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [model card, technical documentation, architecture, intended purpose, accuracy, performance, metrics, limitations, version, design]
     remediation:
       - "Write technical documentation following Annex IV: purpose, design, data, performance, limits and monitoring."
@@ -69,6 +93,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: code
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [log, logging, audit, trace, event, timestamp, retention, record, telemetry]
     remediation:
       - "Log each decision automatically with a timestamp, a reference to the input, the output and the model version."
@@ -86,6 +111,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [instructions for use, explain, explanation, interpret, confidence, score, limitations, intended purpose, user guide, deployer]
     remediation:
       - "Write instructions for use for deployers: purpose, capabilities, known limits, accuracy and conditions of use."
@@ -103,6 +129,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [human review, human oversight, override, approve, manual, escalate, human in the loop, reject, decision, stop, automatic]
     remediation:
       - "Add a required human review step before any consequential outcome, such as a rejection, takes effect."
@@ -120,11 +147,105 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high]
+    applies_to_roles: [provider]
     search_terms: [accuracy, robust, test, evaluation, metrics, security, adversarial, error handling, validation, fallback, retry]
     remediation:
       - "Define accuracy targets, measure them on a held-out test set and publish the results in the documentation."
       - "Add automated tests for errors, edge cases and adversarial or malformed input."
       - "Add fallbacks, retries and input validation, and review dependencies and access controls for security."
+
+  - id: eu-art-17
+    article: "Article 17"
+    title: Quality management system
+    paraphrase: >
+      The provider runs a documented quality management system covering
+      compliance strategy, design and development controls, testing and
+      validation, data management, risk management, post-market monitoring,
+      incident reporting, record keeping and accountability.
+    quote: "Providers of high-risk AI systems shall put a quality management system in place that ensures compliance with this Regulation"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    applies_to_roles: [provider]
+    search_terms: [quality management, qms, procedure, change management, release process, accountability, iso 9001, sop, policy]
+    remediation:
+      - "Write the quality management system down as policies and procedures, with named owners."
+      - "Cover design and change control, testing and validation, data management, risk management and incident handling."
+      - "Audit it on a schedule and keep the records."
+
+  - id: eu-art-26
+    article: "Article 26"
+    title: Deployer obligations
+    paraphrase: >
+      The deployer uses the system according to its instructions, assigns
+      competent people to oversee it, monitors it, keeps its logs for at least
+      six months, informs workers where used at work, and tells people that a
+      high-risk system is used in decisions about them.
+    quote: "Deployers of high-risk AI systems shall take appropriate technical and organisational measures"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    applies_to_roles: [deployer]
+    search_terms: [instructions for use, oversight, monitor, retention, inform, notice, workers, applicant, customer, logs, six months]
+    remediation:
+      - "Name the people who oversee the system, and give them the training and authority to overrule it."
+      - "Keep the system's logs for at least six months, and monitor it against the provider's instructions for use."
+      - "Tell the people affected that a high-risk AI system is used in decisions about them (and workers, if used at work)."
+
+  - id: eu-art-27
+    article: "Article 27"
+    title: Fundamental rights impact assessment
+    paraphrase: >
+      Before first use, deployers that are public bodies or provide public
+      services, and deployers of credit-scoring or life and health insurance
+      pricing systems, assess the impact on fundamental rights and notify the
+      market surveillance authority of the result.
+    quote: "shall perform an assessment of the impact on fundamental rights that the use of such system may produce."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    applies_to_roles: [deployer]
+    applies_if: fria_trigger
+    search_terms: [fundamental rights, impact assessment, fria, discrimination, affected groups, harm, mitigation, complaint]
+    remediation:
+      - "Carry out a fundamental rights impact assessment before first use: processes, affected groups, risks of harm and mitigations."
+      - "Describe the human oversight measures and the complaint route for affected people."
+      - "Notify the market surveillance authority of the result, and update it when anything material changes."
+
+  - id: eu-art-43
+    article: "Article 43"
+    title: Conformity assessment, EU declaration (Art. 47) and CE marking (Art. 48)
+    paraphrase: >
+      Before the system is placed on the market or put into service, the
+      provider completes the relevant conformity assessment, draws up an EU
+      declaration of conformity and affixes the CE marking.
+    quote: "ensure that the high-risk AI system undergoes the relevant conformity assessment"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    applies_to_roles: [provider]
+    search_terms: [conformity, declaration of conformity, ce marking, notified body, internal control, annex vi, certification]
+    remediation:
+      - "Choose the conformity assessment route (usually internal control under Annex VI) and record the outcome."
+      - "Draw up and sign the EU declaration of conformity, and keep it for 10 years."
+      - "Affix the CE marking, digitally where the system is only provided digitally."
+
+  - id: eu-art-49
+    article: "Article 49"
+    title: Registration in the EU database
+    paraphrase: >
+      Before placing an Annex III high-risk system on the market or putting it
+      into service, the provider registers itself and the system in the EU
+      database.
+    quote: "comply with the registration obligations referred to in Article 49(1);"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    applies_to_roles: [provider]
+    search_terms: [registration, eu database, registered, registry, annex viii, listing]
+    remediation:
+      - "Register the provider and the system in the EU database before release, with the Annex VIII information."
+      - "Keep the registration up to date when the system or its intended purpose changes."
 
   - id: eu-art-50-1
     article: "Article 50(1)"
@@ -137,6 +258,7 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: both
     applies_to_tiers: [high, limited]
+    applies_to_roles: [provider]
     applies_if: interacts_with_people
     search_terms: [disclosure, disclose, ai assistant, chatbot, you are talking to, virtual assistant, notice, interacting with, bot, banner]
     remediation:
@@ -155,9 +277,120 @@ controls:
     source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     expected_evidence: code
     applies_to_tiers: [high, limited]
+    applies_to_roles: [provider]
     applies_if: generates_synthetic_content
     search_terms: [watermark, metadata, generated, synthetic, label, c2pa, provenance, machine-readable, ai-generated]
     remediation:
       - "Mark generated audio, image, video or text outputs in a machine-readable way, for example watermarks or metadata."
       - "Check that the marking can be detected, and document the method and its limits."
       - "If the system generates no synthetic content, record that decision in the questionnaire."
+
+  - id: eu-art-50-3
+    article: "Article 50(3)"
+    title: Emotion recognition and biometric categorisation notice
+    paraphrase: >
+      Deployers of emotion recognition or biometric categorisation systems
+      inform the people exposed to them that the system is operating, and
+      process personal data lawfully.
+    quote: "shall inform the natural persons exposed thereto of the operation of the system"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high, limited]
+    applies_to_roles: [deployer]
+    applies_if: emotion_or_biometric_categorisation
+    search_terms: [emotion, sentiment, biometric, face, camera, notice, consent, inform]
+    remediation:
+      - "Show a clear notice to everyone exposed to the system before it analyses them."
+      - "Check the lawful basis for processing biometric data and record it."
+
+  - id: eu-art-50-4
+    article: "Article 50(4)"
+    title: Deep-fake disclosure
+    paraphrase: >
+      Deployers of systems that generate or manipulate image, audio or video
+      content that could pass as real disclose that the content was
+      artificially generated or manipulated.
+    quote: "shall disclose that the content has been artificially generated or manipulated."
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high, limited]
+    applies_to_roles: [deployer]
+    applies_if: deep_fake
+    search_terms: [deepfake, deep fake, synthetic, generated, manipulated, label, disclose, watermark, avatar, voice]
+    remediation:
+      - "Label generated or manipulated image, audio and video content visibly as AI-generated."
+      - "Keep the label when the content is shared or downloaded."
+
+  - id: eu-art-53
+    article: "Article 53"
+    title: General-purpose AI model obligations
+    paraphrase: >
+      Providers of general-purpose AI models keep technical documentation of the
+      model, give downstream providers the information they need, have a
+      copyright policy, and publish a summary of the training content.
+    quote: "draw up and keep up-to-date the technical documentation of the model, including its training and testing process"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high, limited, minimal]
+    applies_to_roles: [provider]
+    applies_if: gpai_model
+    search_terms: [training data, model card, copyright, downstream, training content summary, evaluation, annex xi, annex xii]
+    remediation:
+      - "Keep Annex XI technical documentation for the model, including training and evaluation."
+      - "Give downstream providers the Annex XII information, and publish a summary of the training content."
+      - "Adopt a copyright policy that respects opt-outs from text and data mining."
+
+  - id: eu-art-55
+    article: "Article 55"
+    title: GPAI models with systemic risk
+    paraphrase: >
+      Providers of general-purpose AI models with systemic risk also evaluate
+      the model with state-of-the-art protocols including adversarial testing,
+      assess and mitigate systemic risks, report serious incidents and ensure
+      adequate cybersecurity.
+    quote: "perform model evaluation in accordance with standardised protocols and tools reflecting the state of the art,"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high, limited, minimal]
+    applies_to_roles: [provider]
+    applies_if: gpai_systemic_risk
+    search_terms: [red team, adversarial, evaluation, systemic risk, incident, cybersecurity, benchmark, safety testing]
+    remediation:
+      - "Run and document state-of-the-art evaluations, including adversarial testing (red teaming)."
+      - "Assess and mitigate systemic risks, report serious incidents to the AI Office, and secure the model and its infrastructure."
+
+  - id: eu-art-72
+    article: "Article 72"
+    title: Post-market monitoring
+    paraphrase: >
+      The provider sets up and documents a post-market monitoring plan that
+      actively collects and analyses data on how the system performs once in
+      use, so it stays compliant throughout its lifetime.
+    quote: "Providers shall establish and document a post-market monitoring system"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: both
+    applies_to_tiers: [high]
+    applies_to_roles: [provider]
+    search_terms: [monitoring, post-market, drift, performance, dashboard, alert, metrics, feedback, kpi]
+    remediation:
+      - "Write a post-market monitoring plan: which metrics, how often, who reviews them and what triggers action."
+      - "Collect performance and drift data from production automatically and review it on a schedule."
+      - "Feed what you learn back into the risk management system."
+
+  - id: eu-art-73
+    article: "Article 73"
+    title: Serious incident reporting
+    paraphrase: >
+      The provider has a process to report any serious incident to the market
+      surveillance authority of the Member State where it happened, within the
+      legal deadlines, and to investigate it.
+    quote: "Providers of high-risk AI systems placed on the Union market shall report any serious incident"
+    source_url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+    expected_evidence: document
+    applies_to_tiers: [high]
+    applies_to_roles: [provider]
+    search_terms: [incident, serious incident, escalation, report, authority, breach, outage, investigation]
+    remediation:
+      - "Write an incident procedure that defines a serious incident and who decides whether one has happened."
+      - "Set up reporting to the market surveillance authority within the deadlines (at most 15 days, shorter for some cases)."
+      - "Investigate each incident, record the root cause and the corrective action."

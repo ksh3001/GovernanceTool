@@ -19,6 +19,8 @@ def install_samples(store: Store, samples_dir: Path, frameworks: list[str], user
         if key_path in existing:
             continue
         folder = sample.parent
+        if not load_answer_key(sample).in_sample_set:
+            continue
         questionnaire = Questionnaire.model_validate_json((folder / "questionnaire.json").read_text(encoding="utf-8"))
         record = onboard_application(
             store, name=load_answer_key(sample).app_name, repo_path=str(folder / "repo"),

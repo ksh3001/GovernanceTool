@@ -187,4 +187,4 @@ def test_full_run_calls_verifier_once_per_cited_finding():
     h = TwoStage({"Article 12": A12, "Article 14": A14}, OK)
     result = run(h, [c.id for c in CONTROLS])
     assert sorted(h.verify_calls) == ["Article 12", "Article 14"]
-    assert len(result.findings) == 9 and result.by_control()["eu-art-14"].verification == "verified"
+    assert len(result.findings) == 21 and result.by_control()["eu-art-14"].verification == "verified"
