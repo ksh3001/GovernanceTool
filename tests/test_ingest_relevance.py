@@ -170,7 +170,7 @@ def test_oversight_trap_both_files_reach_the_model_even_with_tight_budget():
 
 # ---------- run plan ----------
 
-@pytest.mark.parametrize("app,expected_controls", [("hr_cv_screener", 7), ("support_chatbot", 1)])
+@pytest.mark.parametrize("app,expected_controls", [("hr_cv_screener", 13), ("support_chatbot", 2)])
 def test_run_plan_for_samples(app, expected_controls):
     q = Questionnaire.model_validate_json((SAMPLES / app / "questionnaire.json").read_text(encoding="utf-8"))
     tier = load_classifier(PACK)(q).tier

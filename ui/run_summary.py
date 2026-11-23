@@ -12,14 +12,26 @@ from core.llm import LLMClient
 from core.models import AppRecord
 from core.questionnaire import Questionnaire
 from core.runplan import RunPlan, build_run_plan
+from core.scope import ScopeFile
 from core.store import Store
 from core.tiers import Applicability, TierResult
 
 
 def render_run(store: Store, settings: Settings, app: AppRecord, framework: str, controls: list[Control],
                applic: list[Applicability], q: Questionnaire, tier: TierResult | None, ingested: IngestResult,
-               has_findings: bool) -> RunPlan:
+               has_findings: bool, scope: ScopeFile | None = None) -> RunPlan | None:
+    if scope is not None and not scope.finalised:
+        st.info("The rule scope is not finalised yet. Check the rules the questionnaire selected and finalise them "
+                "in step 1 before running the assessment.")
+        if st.button("Go to step 1 · Rule scope", type="primary", key=f"to_scope_{framework}"):
+            st.session_state.goto_section = (framework, "Scope")
+            st.rerun()
+        return None
     plan = build_run_plan(ingested, controls, applic)
+    in_scope = sum(c.applies for c in plan.controls)
+    if scope is not None:
+        st.caption(f"Assessing {in_scope} rule{'s' if in_scope != 1 else ''} from the scope finalised by "
+                   f"{scope.finalised_by} on {scope.finalised_at}.")
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Files found", plan.files_found)
@@ -46,6 +58,7 @@ def render_run(store: Store, settings: Settings, app: AppRecord, framework: str,
             result = run_assessment(
                 app_id=app.app_id, framework=framework, controls=controls, applicability=applic, q=q, tier=tier,
                 ingested=ingested, llm=LLMClient(settings), repo_commit=app.repo_commit,
+                scope_finalised_at=scope.finalised_at if scope else "",
                 progress=lambda done, total, text: bar.progress(done / max(total, 1), text=text),
                 log=lambda entry: store.append_log(app.app_id, f"logs/run_{framework}.jsonl", entry))
         except RuntimeError as exc:  # configuration or replay problem: nothing is saved
@@ -56,13 +69,16 @@ def render_run(store: Store, settings: Settings, app: AppRecord, framework: str,
             st.session_state.goto_section = (framework, "Dashboard")
             st.rerun()
 
-    st.subheader("Controls")
+    st.subheader(f"Rules to assess ({in_scope})")
+    out = len(plan.controls) - in_scope
+    if out:
+        st.caption(f"{out} rule{'s are' if out != 1 else ' is'} out of scope and will be recorded as not applicable "
+                   "without a model call. See step 1 for the reason for each.")
     for c in plan.controls:
+        if not c.applies:
+            continue
         with st.container(border=True):
             st.markdown(f"**{c.article}** · {c.title}")
-            if not c.applies:
-                st.caption(f"Not applicable. {c.not_applicable_reason}")
-                continue
             sel = c.selection
             note = "whole app fits in the budget" if sel.shortcut else (
                 f"{len(sel.trimmed)} trimmed, {len(sel.left_out)} left out" if sel.trimmed or sel.left_out

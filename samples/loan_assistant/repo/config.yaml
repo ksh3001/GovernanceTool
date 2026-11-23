@@ -1,0 +1,17 @@
+# Loan pre-approval assistant: runtime settings. Sample application C. Fictional.
+model:
+  name: credit-gbm
+  version: "2.3"
+  path: models/credit_gbm_v2_3.bin
+
+decision:
+  approve_at_or_above: 0.70   # probability of repayment
+  decline_below: 0.40         # declined automatically, letter sent
+  # scores in between go to the underwriter queue
+
+audit:
+  log_file: logs/decisions.jsonl
+  retention_years: 7
+
+monitoring:
+  approval_gap_alert: 0.10    # alert if approval rates differ by more than 10 points between regions

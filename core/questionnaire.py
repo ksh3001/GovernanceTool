@@ -30,7 +30,12 @@ PROHIBITED_PRACTICES: dict[str, str] = {
     "realtime_remote_biometrics": "Real-time remote biometric identification in public spaces for law enforcement",
 }
 
-Role = Literal["provider", "deployer"]
+Role = Literal["provider", "deployer", "provider_and_deployer"]
+ROLE_LABELS: dict[str, str] = {
+    "provider": "Provider: we build it and put it on the market or into service",
+    "deployer": "Deployer: we use a system someone else built",
+    "provider_and_deployer": "Both: we build it and use it ourselves",
+}
 Autonomy = Literal["fully_automated", "human_reviews", "advisory_only"]
 
 
@@ -46,6 +51,26 @@ class Questionnaire(BaseModel):
     interacts_with_people: bool = False
     generates_synthetic_content: bool = False
     prohibited_practices: list[str] = Field(default_factory=list)
+    # Added for rule scoping. Defaults keep older saved questionnaires valid.
+    public_body_or_service: bool = False  # deployer is a public body or a private entity providing public services
+    credit_or_insurance: bool = False  # creditworthiness / credit score, or life and health insurance pricing
+    emotion_or_biometric_categorisation: bool = False
+    deep_fake: bool = False  # generates or manipulates image, audio or video that could pass as real
+    gpai_model: bool = False  # we provide a general-purpose AI model to others
+    gpai_systemic_risk: bool = False
+
+    @property
+    def is_provider(self) -> bool:
+        return self.role in ("provider", "provider_and_deployer")
+
+    @property
+    def is_deployer(self) -> bool:
+        return self.role in ("deployer", "provider_and_deployer")
+
+    @property
+    def fria_trigger(self) -> bool:
+        """Article 27 applies to public bodies / public-service providers and to credit or insurance uses."""
+        return self.public_body_or_service or self.credit_or_insurance
 
     def problems(self) -> list[str]:
         out = []
@@ -56,4 +81,6 @@ class Questionnaire(BaseModel):
         unknown = set(self.prohibited_practices) - set(PROHIBITED_PRACTICES)
         if unknown:
             out.append(f"Unknown prohibited practices: {sorted(unknown)}")
+        if self.gpai_systemic_risk and not self.gpai_model:
+            out.append("A model with systemic risk must also be a general-purpose AI model.")
         return out

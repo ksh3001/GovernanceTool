@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
-from .answer_key import find_answer_key
+from .answer_key import find_answer_key, find_answer_key_for_folder
 from .fetch import FetchedRepo, FetchError, _remove_tree, clone_repo, validate_repo_url
 from .models import AppRecord
 from .questionnaire import Questionnaire
@@ -70,8 +70,8 @@ def onboard_application(store: Store, *, name: str, repo_path: str = "", repo_ur
         _remove_tree(final)
         os.replace(checkout, final)
         record.repo_path = str(final.resolve())
-    if samples_dir and repo_url:
-        key = find_answer_key(samples_dir, repo_url)
+    if samples_dir:
+        key = find_answer_key(samples_dir, repo_url) if repo_url else find_answer_key_for_folder(samples_dir, repo)
         record.answer_key_path = str(key) if key else ""
     store.save(record.app_id, "app.json", record)
     store.save(record.app_id, QUESTIONNAIRE_FILE, questionnaire)

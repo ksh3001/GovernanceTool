@@ -80,8 +80,8 @@ def compute_agreement(findings: FindingsFile, key: AnswerKey, tool_tier: str) ->
                     tier_expert=key.expected_tier, tier_match=tool_tier == key.expected_tier)
     for f in findings.findings:
         expert = key.controls.get(f.control_id)
-        if expert is None:
-            continue  # the key does not cover this control, so it cannot be scored
+        if expert is None or f.scope_change:
+            continue  # not in the key, or a person changed the scope: the tool's own answer cannot be scored
         wanted = [e for e in expert.evidence if e.role == "supports"]
         ev = None
         if wanted:

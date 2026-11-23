@@ -10,6 +10,7 @@ from core.store import Store
 from ui import citation
 from ui.findings import badge, verification_text
 
+SCOPE_TAG = {"added": "Added to scope", "removed": "Removed from scope", "custom": "Custom rule"}
 FILTERS = ["All", "Needs review", "Gaps (not met / insufficient)", "Overridden"]
 
 
@@ -26,7 +27,7 @@ def render(store: Store, app_id: str, framework: str, findings: FindingsFile, re
         st.info(f"{n} earlier decision(s) belong to a previous assessment run and are not applied to these findings.")
 
     done = len(decisions)
-    reviewable = [f for f in findings.findings]
+    reviewable = findings.reviewable
     st.progress(done / max(len(reviewable), 1), text=f"{done} of {len(reviewable)} findings reviewed by you or your team")
     choice = st.radio("Show", FILTERS, horizontal=True, key=f"filter_{framework}")
     focus = st.session_state.pop("focus_control", None)
@@ -53,6 +54,8 @@ def render(store: Store, app_id: str, framework: str, findings: FindingsFile, re
                 head += f' → reviewer: {badge(d.final_status)}'
             elif d:
                 head += ' <span class="tag tag-ok">Confirmed</span>'
+            if f.scope_change:
+                head += f' <span class="tag tag-draft">{SCOPE_TAG[f.scope_change]}</span>'
             st.markdown(f"{head} **{title}**", unsafe_allow_html=True)
             with st.expander("Open finding", expanded=(focus == f.control_id)):
                 if f.rationale:
@@ -72,7 +75,10 @@ def render(store: Store, app_id: str, framework: str, findings: FindingsFile, re
                         f"{x.key.split(':', 1)[1]} ({x.score:g}{'' if x.full else ', trimmed'})" for x in f.files_considered))
                 if d:
                     st.caption(f"{d.decision.capitalize()} by {d.reviewer} · {d.at}" + (f" · “{d.note}”" if d.note else ""))
-                _decision_form(store, review, f, findings, user, framework, app_id, d is not None)
+                if f.status == "not_applicable":
+                    st.caption("Out of scope, so no review decision is needed. Change the scope in step 1 to assess it.")
+                else:
+                    _decision_form(store, review, f, findings, user, framework, app_id, d is not None)
 
 
 def _decision_form(store, review, finding, findings, user, framework, app_id, has_decision) -> None:

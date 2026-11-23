@@ -162,7 +162,7 @@ def render(store: Store, settings: Settings, overview: Overview, apps: list[AppR
         if not overview.next_actions:
             st.caption("Load the sample apps or onboard your own to get started.")
         for n in overview.next_actions:
-            st.button(f"{ {'Run': '▶️', 'Review': '🔍', 'Report': '📄'}[n.section] }  {n.text}", key=f"next_{n.app_id}",
+            st.button(f"{ {'Scope': '🧭', 'Run': '▶️', 'Review': '🔍', 'Report': '📄'}[n.section] }  {n.text}", key=f"next_{n.app_id}",
                       width="stretch", on_click=_open_step, args=(n.app_id, n.framework, n.section))
         if overview.top_gaps:
             g = overview.top_gaps[0]

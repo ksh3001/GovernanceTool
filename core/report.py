@@ -10,6 +10,7 @@ from .agreement import Agreement
 from .findings import STATUS_LABELS, FindingsFile
 from .models import AppRecord, PackInfo
 from .review import ReviewFile, current_decisions
+from .scope import summarise_scope
 from .scoring import summarise
 from .tiers import TierResult
 
@@ -22,7 +23,8 @@ def _pct(x: float | None) -> str:
 
 
 def build_report_html(*, app: AppRecord, pack: PackInfo, tier: TierResult | None, findings: FindingsFile,
-                      review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool, controls=None) -> str:
+                      review: ReviewFile | None, agreement: Agreement | None, coverage_partial: bool, controls=None,
+                      scope_rules=None, scope=None) -> str:
     summary = summarise(findings, review, controls)
     decisions = current_decisions(review, findings)
     top = max(max(summary.counts.values()), 1)
@@ -32,6 +34,8 @@ def build_report_html(*, app: AppRecord, pack: PackInfo, tier: TierResult | None
         agreement=agreement, labels=STATUS_LABELS, bars=bars, coverage_partial=coverage_partial,
         score_text=_pct(summary.score), tool_score_text=_pct(summary.tool_score),
         reviewer_names=sorted({d.reviewer for d in decisions.values()}),
+        scope_rules=scope_rules or [], scope=scope,
+        scope_summary=summarise_scope(scope_rules) if scope_rules else None,
         generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
 
 

@@ -9,9 +9,9 @@ from core.store import Store
 PACK = ROOT / "control_packs" / "eu_ai_act"
 
 
-def test_pack_has_8_to_10_complete_controls():
+def test_pack_has_complete_controls():
     controls = load_controls(PACK)
-    assert 8 <= len(controls) <= 10
+    assert len(controls) == 21
     for c in controls:
         assert c.article and c.quote and c.paraphrase and c.search_terms
         assert c.source_url.startswith("https://eur-lex.europa.eu/")

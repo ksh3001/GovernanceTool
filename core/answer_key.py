@@ -37,6 +37,7 @@ class AnswerKey(BaseModel):
     tier_rule: str
     status: str = "draft_unreviewed"
     reviewed_by: str | None = None
+    in_sample_set: bool = True  # False: not added by "Load sample apps" (kept for the live onboarding demo)
     controls: dict[str, KeyControl]
     trap_cases: list[TrapCase] = Field(default_factory=list)
 
@@ -52,5 +53,16 @@ def find_answer_key(samples_dir: Path, repo_url: str) -> Path | None:
     for path in sorted(Path(samples_dir).glob("*/answer_key.yaml")):
         key = load_answer_key(path)
         if key.repo_url and normalize_url(key.repo_url) == wanted:
+            return path.resolve()
+    return None
+
+
+def find_answer_key_for_folder(samples_dir: Path, repo_path: str) -> Path | None:
+    """Answer key of a bundled sample whose repo/ folder is the one onboarded, or None."""
+    if not repo_path:
+        return None
+    wanted = Path(repo_path).resolve()
+    for path in sorted(Path(samples_dir).glob("*/answer_key.yaml")):
+        if (path.parent / "repo").resolve() == wanted:
             return path.resolve()
     return None

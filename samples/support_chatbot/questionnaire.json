@@ -1,6 +1,6 @@
 {
   "purpose": "Answers customers' routine questions about orders, delivery and returns in a website chat window.",
-  "role": "deployer",
+  "role": "provider",
   "eu_market": true,
   "annex_iii_area": "none",
   "safety_component_annex_i": false,

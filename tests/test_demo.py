@@ -69,7 +69,7 @@ def test_describe_lists_every_control_and_the_agreement(tmp_path):
 
 
 def test_sample_folders_found():
-    assert {p.name for p in sample_folders()} == {"hr_cv_screener", "support_chatbot"}
+    assert {p.name for p in sample_folders()} == {"hr_cv_screener", "support_chatbot", "loan_assistant"}
 
 
 def test_default_settings_point_at_the_demo_cache(monkeypatch):
