@@ -111,6 +111,43 @@ CSS = """
   .insight {background:rgba(34,197,94,.13); border:1px solid rgba(34,197,94,.35); border-radius:14px;
             padding:.8rem .95rem; margin-bottom:.9rem; font-size:.88rem;}
   .insight .t {font-weight:700; margin-bottom:.25rem;}
+
+  /* workflow stepper */
+  .stepper {display:flex; gap:6px; margin:.2rem 0 1.1rem; flex-wrap:wrap;}
+  .stepper .step {flex:1; min-width:130px; display:flex; align-items:center; gap:8px; padding:.5rem .7rem;
+                  border:1px solid var(--pv-line); border-radius:10px; font-size:.82rem; opacity:.6;}
+  .stepper .dot {width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                 font-size:.72rem; font-weight:800; border:1px solid var(--pv-line); flex:none;}
+  .stepper .step.done {opacity:1;}
+  .stepper .step.done .dot {background:#15803D; color:#fff; border-color:transparent;}
+  .stepper .step.current {opacity:1; border-color:var(--pv-accent); background:rgba(99,102,241,.12); font-weight:700;}
+  .stepper .step.current .dot {background:var(--pv-accent); color:#fff; border-color:transparent;}
+  .stepper .lbl {line-height:1.15;}
+
+  /* page title */
+  .ptitle h1 {margin:0; padding:0; font-size:1.8rem;}
+  .ptitle .psub {opacity:.7; font-size:.9rem; margin:.15rem 0 .5rem;}
+  .ptitle .pchips {display:flex; gap:6px; flex-wrap:wrap; margin-bottom:.6rem;}
+
+  /* posture bar and verdict */
+  .stack {display:flex; height:14px; border-radius:999px; overflow:hidden; border:1px solid var(--pv-line); margin:.5rem 0 .4rem;}
+  .stack .seg {display:block; height:100%;}
+  .legend {display:flex; gap:14px; flex-wrap:wrap; font-size:.78rem; opacity:.85;}
+  .legend i {display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px;}
+  .verdict {border-radius:14px; padding:.9rem 1.1rem; margin:.3rem 0 1rem; border:1px solid var(--pv-line); border-left-width:6px;}
+  .verdict .vh {font-size:1.15rem; font-weight:800; letter-spacing:-0.01em;}
+  .verdict .vd {font-size:.88rem; opacity:.8; margin-top:.15rem;}
+  .verdict.good {border-left-color:#15803D; background:rgba(34,197,94,.10);}
+  .verdict.warn {border-left-color:#A16207; background:rgba(245,158,11,.12);}
+  .verdict.bad  {border-left-color:#B91C1C; background:rgba(185,28,28,.10);}
+  .verdict.info {border-left-color:var(--pv-accent); background:rgba(99,102,241,.10);}
+
+  /* empty state and sign-in hero */
+  .empty {text-align:center; padding:2rem 1rem; border:1px dashed var(--pv-line); border-radius:14px; margin:.5rem 0 1rem;}
+  .empty .ei {font-size:2rem;} .empty .et {font-weight:700; margin:.3rem 0 .15rem;} .empty .eb {opacity:.7; font-size:.88rem;}
+  .hero {padding:1.4rem 0 .4rem;} .hero h1 {font-size:2.2rem; margin:.2rem 0;}
+  .hero .tag-line {opacity:.75; margin-bottom:1rem;}
+  .feat {display:flex; gap:10px; margin:.5rem 0; font-size:.9rem;} .feat .fi {font-size:1.1rem;}
 </style>
 """
 

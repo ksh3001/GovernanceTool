@@ -11,6 +11,7 @@ from core.findings import STATUS_LABELS, FindingsFile
 from core.review import ReviewFile
 from core.scoring import summarise
 from core.tiers import TierResult
+from ui import components as ui
 from ui.findings import STATUS_COLOURS, badge
 
 TIER_COLOURS = {"prohibited": "#B91C1C", "high": "#C2410C", "limited": "#A16207",
@@ -26,9 +27,25 @@ def _go_review(framework: str, control_id: str) -> None:
     st.session_state.focus_control = control_id
 
 
+def _verdict(s, findings: FindingsFile) -> None:
+    """One headline for leadership: how many applicable rules are met, and what needs action."""
+    applicable = sum(n for k, n in s.counts.items() if k != "not_applicable")
+    met = s.counts.get("met", 0)
+    gaps = s.counts.get("not_met", 0) + s.counts.get("insufficient_evidence", 0)
+    if not applicable:
+        return
+    tone = "good" if gaps == 0 else "bad" if s.counts.get("not_met", 0) else "warn"
+    head = (f"{met} of {applicable} applicable rules met" if gaps == 0 else
+            f"{gaps} of {applicable} applicable rules need action")
+    ui.verdict_banner(head, f"Compliance score {_pct(s.score)} · {s.reviewed} of {len(findings.reviewable)} findings "
+                            "reviewed by a person. Internal metric, not an official rating.", tone)
+    st.markdown(ui.stacked_bar(s.counts), unsafe_allow_html=True)
+
+
 def render(framework: str, tier: TierResult | None, findings: FindingsFile, review: ReviewFile | None,
            coverage_partial: bool, agreement: Agreement | None = None, controls: list[Control] | None = None) -> None:
     s = summarise(findings, review, controls)
+    _verdict(s, findings)
     left, mid, right = st.columns([1.3, 1, 1])
     with left:
         st.caption("Risk tier")

@@ -19,6 +19,7 @@ from core.scoring import summarise
 from core.runplan import build_run_plan
 from core.store import Store
 from core.tiers import control_applicability, load_classifier
+from ui import components as ui
 from ui.nav import header, hint
 from ui import dashboard, report as report_view, review as review_view, run_summary, scope as scope_view
 
@@ -39,6 +40,18 @@ def _step_labels(findings: FindingsFile | None, review: ReviewFile | None, scope
     labels["Run"] += "  ✓"
     labels["Review"] += f"  ({summary.reviewed}/{len(findings.reviewable)})"
     return labels
+
+
+TIER_COLOURS = {"prohibited": "#B91C1C", "high": "#C2410C", "limited": "#A16207",
+                "minimal": "#15803D", "out_of_scope": "#475569"}
+
+
+def _progress(findings: FindingsFile | None, review: ReviewFile | None, scope: ScopeFile) -> list[tuple[str, str]]:
+    """(step, done|todo) for the stepper, in working order."""
+    reviewed_all = bool(findings) and summarise(findings, review).reviewed >= len(findings.reviewable)
+    done = {"Scope": scope.finalised, "Run": findings is not None, "Review": reviewed_all,
+            "Dashboard": findings is not None, "Report": False}
+    return [(name, "done" if done[name] else "todo") for name in SECTIONS]
 
 
 def _next_step(findings: FindingsFile | None, review: ReviewFile | None, scope: ScopeFile) -> str | None:
@@ -111,9 +124,13 @@ def render(store: Store, settings: Settings, app_id: str) -> None:
     header("Applications", app.name, fw_name, section, mode=settings.llm_mode)
     if flash := st.session_state.pop("flash", None):
         st.success(flash)
-    st.title(app.name)
-    st.caption(f"Source: {app.repo_url} · commit `{app.repo_commit[:10]}`" if app.repo_url
-               else f"Source: local folder {app.repo_path}")
+    source = (f"Source: {ui.E(app.repo_url)} · commit {ui.E(app.repo_commit[:10])}" if app.repo_url
+              else f"Source: local folder {ui.E(app.repo_path)}")
+    chips = [ui.chip(fw_name), ui.chip(tier.label, TIER_COLOURS.get(tier.tier, "#475569")) if tier else "",
+             ui.chip("Scope finalised" if scope.finalised else "Scope not finalised"),
+             ui.chip("Assessed" if findings else "Not assessed")]
+    ui.page_title(app.name, source, [c for c in chips if c])
+    st.markdown(ui.stepper(_progress(findings, review, scope), section), unsafe_allow_html=True)
     if message := _next_step(findings, review, scope):
         hint(message)
     if findings and findings.scope_finalised_at and findings.scope_finalised_at != scope.finalised_at:

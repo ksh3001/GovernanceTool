@@ -8,6 +8,7 @@ from core.ingest import IngestResult
 from core.review import ReviewFile, current_decisions, final_status, record_decision, review_path, stale_count
 from core.store import Store
 from ui import citation
+from ui import components as ui
 from ui.findings import badge, verification_text
 
 SCOPE_TAG = {"added": "Added to scope", "removed": "Removed from scope", "custom": "Custom rule"}
@@ -26,6 +27,8 @@ def render(store: Store, app_id: str, framework: str, findings: FindingsFile, re
     if (n := stale_count(review, findings)):
         st.info(f"{n} earlier decision(s) belong to a previous assessment run and are not applied to these findings.")
 
+    st.markdown(ui.stacked_bar({k: sum(final_status(f, decisions) == k for f in findings.findings)
+                                for k in STATUS_LABELS}), unsafe_allow_html=True)
     done = len(decisions)
     reviewable = findings.reviewable
     st.progress(done / max(len(reviewable), 1), text=f"{done} of {len(reviewable)} findings reviewed by you or your team")

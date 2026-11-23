@@ -111,3 +111,48 @@ def activity_table(items) -> str:
         rows.append(f'<tr><td><b>{E(a.title)}</b><div class="barsub">{E(a.detail)}</div></td><td>{E(a.app)}</td>'
                     f'<td class="when">{E(ago(a.at))}</td><td>{pill}</td></tr>')
     return '<table class="feed">' + "".join(rows) + "</table>"
+
+
+# ---- governance workflow building blocks -------------------------------------------------------
+
+def stepper(steps: list[tuple[str, str]], current: str) -> str:
+    """Horizontal workflow tracker. `steps` is [(name, state)] with state done|todo|locked; `current` is the open step."""
+    items = []
+    for i, (name, state) in enumerate(steps, 1):
+        cls = "current" if name == current else state
+        mark = "✓" if state == "done" and name != current else str(i)
+        items.append(f'<div class="step {cls}"><span class="dot">{mark}</span><span class="lbl">{E(name)}</span></div>')
+    return f'<div class="stepper" role="list">{"".join(items)}</div>'
+
+
+def page_title(title: str, subtitle: str = "", chips: list[str] | None = None) -> None:
+    st.markdown(f'<div class="ptitle"><h1>{E(title)}</h1>' + (f'<div class="psub">{subtitle}</div>' if subtitle else "")
+                + (f'<div class="pchips">{"".join(chips)}</div>' if chips else "") + '</div>', unsafe_allow_html=True)
+
+
+def chip(text: str, colour: str | None = None) -> str:
+    style = f' style="background:{colour};color:#fff;border-color:transparent"' if colour else ""
+    return f'<span class="pill"{style}>{E(text)}</span>'
+
+
+def stacked_bar(counts: dict[str, int]) -> str:
+    """One bar split by finding status, with a legend. Shows the whole posture at a glance."""
+    total = sum(counts.values())
+    if not total:
+        return ""
+    segs = "".join(f'<span class="seg" title="{E(label)}: {n}" style="width:{100 * n / total:.2f}%;background:{colour}"></span>'
+                   for label, n, colour in status_bars(counts) if n)
+    legend = "".join(f'<span class="lg"><i style="background:{colour}"></i>{E(label)} <b>{n}</b></span>'
+                     for label, n, colour in status_bars(counts) if n)
+    return f'<div class="stack">{segs}</div><div class="legend">{legend}</div>'
+
+
+def verdict_banner(headline: str, detail: str, tone: str = "info") -> None:
+    """A large headline for the state of an assessment. tone: good | warn | bad | info."""
+    st.markdown(f'<div class="verdict {tone}"><div class="vh">{E(headline)}</div><div class="vd">{E(detail)}</div></div>',
+                unsafe_allow_html=True)
+
+
+def empty_state(icon: str, title: str, body: str) -> None:
+    st.markdown(f'<div class="empty"><div class="ei">{E(icon)}</div><div class="et">{E(title)}</div>'
+                f'<div class="eb">{E(body)}</div></div>', unsafe_allow_html=True)

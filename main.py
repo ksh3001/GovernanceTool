@@ -28,23 +28,32 @@ settings, store = services()
 
 
 def sign_in() -> None:
-    _, mid, _ = st.columns([1, 1.2, 1])
-    with mid:
-        st.markdown('<div class="brand">🛡️ Provenix</div>', unsafe_allow_html=True)
-        st.title("Sign in")
-        st.caption("Your name is recorded on every review decision.")
-        with st.form("signin"):
-            name = st.text_input("Your name")
-            password = st.text_input("Demo password", type="password") if settings.demo_password else ""
-            submitted = st.form_submit_button("Continue", type="primary", width="stretch")
-        if submitted:
-            if not name.strip():
-                st.error("Please enter your name.")
-            elif settings.demo_password and not hmac.compare_digest(password, settings.demo_password):
-                st.error("Incorrect password.")
-            else:
-                st.session_state.user = name.strip()
-                st.rerun()
+    left, right = st.columns([1.2, 1], gap="large")
+    with left:
+        st.markdown(
+            '<div class="hero"><div class="brand">🛡️ Provenix</div><h1>Know your AI is compliant before the regulator asks.</h1>'
+            '<div class="tag-line">Onboard an AI application, let the questionnaire choose the rules, assess the code '
+            'against them, and sign off a report with every finding traced to evidence.</div>'
+            '<div class="feat"><span class="fi">🧭</span><span><b>Questionnaire-driven scope.</b> Rules apply by risk tier, role and answers, each with a reason.</span></div>'
+            '<div class="feat"><span class="fi">🔎</span><span><b>Evidence you can check.</b> Every finding cites exact file lines.</span></div>'
+            '<div class="feat"><span class="fi">✍️</span><span><b>People stay in charge.</b> Confirm or override, with an audit trail.</span></div>'
+            '</div>', unsafe_allow_html=True)
+    with right:
+        with st.container(border=True):
+            st.subheader("Sign in")
+            st.caption("Your name is recorded on every review decision.")
+            with st.form("signin", border=False):
+                name = st.text_input("Your name")
+                password = st.text_input("Demo password", type="password") if settings.demo_password else ""
+                submitted = st.form_submit_button("Continue", type="primary", width="stretch")
+            if submitted:
+                if not name.strip():
+                    st.error("Please enter your name.")
+                elif settings.demo_password and not hmac.compare_digest(password, settings.demo_password):
+                    st.error("Incorrect password.")
+                else:
+                    st.session_state.user = name.strip()
+                    st.rerun()
 
 
 def framework_picker() -> None:
